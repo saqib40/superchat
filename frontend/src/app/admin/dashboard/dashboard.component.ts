@@ -1,14 +1,43 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-dashboard',
-  standalone:true,
-  imports: [CommonModule,RouterModule],
+  standalone: true,
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: './dashboard.component.html',
-  styleUrl: './dashboard.component.css'
+  styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
+  vendorEmail: string = '';
+  isAddVendorRoute: boolean = false;
 
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    this.checkCurrentRoute(this.router.url);
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe((event: NavigationEnd) => {
+      this.checkCurrentRoute(event.url);
+    });
+  }
+
+  private checkCurrentRoute(url: string) {
+    this.isAddVendorRoute = url.includes('/admin/add-vendor');
+  }
+
+  sendInvitation() {
+    if (this.vendorEmail) {
+      console.log('Sending invitation to:', this.vendorEmail);
+      alert(`Invitation sent to ${this.vendorEmail}!`);
+      this.vendorEmail = '';
+    } else {
+      alert('Please enter a valid email address.');
+    }
+  }
 }
