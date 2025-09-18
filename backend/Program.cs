@@ -1,6 +1,8 @@
 using DotNetEnv;
 using backend.Config;
 using backend.Services;
+using Amazon.S3;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -22,6 +24,18 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // --- Add Custom Services ---
 builder.Services.AddScoped<AuthService>();
+
+// Configuring the AWS S3
+var awsCredentials = new BasicAWSCredentials(
+    Environment.GetEnvironmentVariable("AWS_ACCESS_KEY_ID"),
+    Environment.GetEnvironmentVariable("AWS_SECRET_ACCESS_KEY")
+);
+var awsConfig = new AmazonS3Config
+{
+    ServiceURL = Environment.GetEnvironmentVariable("S3_ENDPOINT"),
+    ForcePathStyle = true // Important for S3-compatible services like MinIO
+};
+builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(awsCredentials, awsConfig));
 
 // --- Add and Configure JWT Authentication ---
 builder.Services.AddAuthentication(options =>

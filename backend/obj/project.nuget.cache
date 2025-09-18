@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "HcatRuangag=",
+  "dgSpecHash": "psRkugQs+sw=",
   "success": true,
   "projectFilePath": "/home/conshus/projects/superchat/backend/backend.csproj",
   "expectedPackageFiles": [
+    "/home/conshus/.nuget/packages/awssdk.core/4.0.0.28/awssdk.core.4.0.0.28.nupkg.sha512",
+    "/home/conshus/.nuget/packages/awssdk.s3/4.0.7.2/awssdk.s3.4.0.7.2.nupkg.sha512",
     "/home/conshus/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/home/conshus/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
     "/home/conshus/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512",
