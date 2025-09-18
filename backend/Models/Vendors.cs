@@ -26,6 +26,15 @@ namespace backend.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
+        // These fields temporarily store the vendor's submitted details while awaiting approval.
+        [MaxLength(100)]
+        public string? PendingFirstName { get; set; }
+
+        [MaxLength(100)]
+        public string? PendingLastName { get; set; }
+        
+        public string? PendingPasswordHash { get; set; }
+
         // Foreign Keys
         public int? UserId { get; set; } // The vendor's own user account
         public int AddedByAdminId { get; set; } // The admin who added the vendor
