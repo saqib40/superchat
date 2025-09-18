@@ -13,6 +13,14 @@ export const routes: Routes = [{
     loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
   {
+  path: 'leadership/dashboard',
+  loadComponent: () => import('./leadership/dashboard/dashboard.component').then(m => m.LeadershipDashboardComponent)
+  },
+  {
+  path: 'vendor/dashboard',
+  loadComponent: () => import('./vendor/dashboard/dashboard.component').then(m => m.VendorDashboardComponent)
+},
+  {
     path: '',
     redirectTo: '/login',
     pathMatch: 'full'
