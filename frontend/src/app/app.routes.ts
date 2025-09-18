@@ -8,6 +8,10 @@ export const routes: Routes = [{
      path: 'admin/dashboard',
      loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
+   {
+    path: 'admin/add-vendor', // This is the new route
+    loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
+  },
   {
     path: '',
     redirectTo: '/login',
