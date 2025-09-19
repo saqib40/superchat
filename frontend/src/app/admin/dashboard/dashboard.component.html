@@ -1,0 +1,68 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h3 class="sidebar-title">Waters Admin</h3>
+    <nav>
+      <ul class="main-nav">
+        <li>
+          <a routerLink="/admin/dashboard" routerLinkActive="active">
+            <span class="material-icons">dashboard</span>
+            Dashboard
+          </a>
+        </li>
+
+        <!-- Vendors Section with dropdown -->
+        <li class="has-submenu">
+          <a href="javascript:void(0)" (click)="toggleVendors()">
+            <span class="material-icons">group</span>
+            Vendors
+            <span class="material-icons arrow">
+              {{ vendorsOpen ? 'expand_less' : 'expand_more' }}
+            </span>
+          </a>
+          <ul class="vendor-submenu" [class.open]="vendorsOpen">
+            <li>
+              <a routerLink="/admin/vendors" routerLinkActive="active">
+                <span class="material-icons">list_alt</span>
+                Vendor List
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/add-vendor" routerLinkActive="active">
+                <span class="material-icons">person_add</span>
+                Add Vendor
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Dashboard Overview -->
+    <div class="welcome-card">
+      <h2>Welcome to Waters Admin Dashboard</h2>
+      <p class="subtitle">Quick overview of vendor activity</p>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <span class="material-icons success">verified</span>
+          <h3>42</h3>
+          <p>Approved Vendors</p>
+        </div>
+        <div class="overview-card">
+          <span class="material-icons warning">pending</span>
+          <h3>8</h3>
+          <p>Pending Invitations</p>
+        </div>
+        <div class="overview-card">
+          <span class="material-icons info">hourglass_bottom</span>
+          <h3>5</h3>
+          <p>Awaiting Approval</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
