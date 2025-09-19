@@ -13,7 +13,7 @@
 
         <!-- Vendors Section with dropdown -->
         <li class="has-submenu">
-          <a href="javascript:void(0)" (click)="vendorsOpen = !vendorsOpen">
+          <a href="javascript:void(0)" (click)="toggleVendors()">
             <span class="material-icons">group</span>
             Vendors
             <span class="material-icons arrow">
@@ -42,7 +42,7 @@
   <!-- Main Content -->
   <main class="main-content">
     <!-- Dashboard Overview -->
-    <div *ngIf="!isAddVendorRoute" class="welcome-card">
+    <div class="welcome-card">
       <h2>Welcome to Waters Admin Dashboard</h2>
       <p class="subtitle">Quick overview of vendor activity</p>
 
@@ -62,46 +62,6 @@
           <h3>5</h3>
           <p>Awaiting Approval</p>
         </div>
-      </div>
-    </div>
-
-    <!-- Add Vendor Page -->
-    <div *ngIf="isAddVendorRoute" class="add-vendor-form">
-      <h2>Add Vendor</h2>
-      <p class="subtitle">Send an invitation to onboard a new vendor</p>
-
-      <div class="form-group">
-        <label for="email">Vendor Email</label>
-        <input
-          type="email"
-          id="email"
-          [(ngModel)]="vendorEmail"
-          placeholder="Enter vendor email"
-        />
-        <button class="primary-btn" (click)="sendInvitation()">
-          <span class="material-icons">send</span>
-          Send Invitation
-        </button>
-      </div>
-
-      <!-- Status -->
-      <div *ngIf="vendorStatus === 'pending'" class="status-box warning">
-        <span class="material-icons">schedule</span>
-        Invitation sent. Waiting for vendor to verify.
-      </div>
-
-      <div *ngIf="vendorStatus === 'requesting'" class="status-box info">
-        <span class="material-icons">hourglass_bottom</span>
-        Vendor submitted details. Awaiting approval.
-        <button (click)="approveVendor()" class="secondary-btn">
-          <span class="material-icons">check_circle</span>
-          Approve Vendor
-        </button>
-      </div>
-
-      <div *ngIf="vendorStatus === 'approved'" class="status-box success">
-        <span class="material-icons">verified</span>
-        Vendor approved successfully.
       </div>
     </div>
   </main>

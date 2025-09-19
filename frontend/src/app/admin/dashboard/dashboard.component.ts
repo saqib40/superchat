@@ -1,64 +1,18 @@
-
-
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { RouterModule, Router, NavigationEnd } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { filter } from 'rxjs/operators';
-import { VendorService } from '../../services/vendor.service';
-
+import { Component } from '@angular/core';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css']
 })
-export class DashboardComponent implements OnInit {
-  vendorEmail: string = '';
-  isAddVendorRoute: boolean = false;
-  vendorStatus: 'idle' | 'pending' | 'requesting' | 'approved' = 'idle';
+export class DashboardComponent {
+  vendorsOpen: boolean = false;
 
-  vendorsOpen:boolean=false;
-
-    toggleVendors() {
+  toggleVendors() {
     this.vendorsOpen = !this.vendorsOpen;
-  }
-
-
-  constructor(private router: Router, private vendorService: VendorService) {}
-
-  ngOnInit() {
-    this.checkCurrentRoute(this.router.url);
-
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe((event: NavigationEnd) => {
-      this.checkCurrentRoute(event.url);
-    });
-  }
-
-  private checkCurrentRoute(url: string) {
-    this.isAddVendorRoute = url.includes('/admin/add-vendor');
-  }
-
-  sendInvitation() {
-    if (this.vendorEmail.trim()) {
-      // Simulated API call
-      this.vendorService.sendInvitation(this.vendorEmail).subscribe(() => {
-        this.vendorStatus = 'pending';
-      });
-    }
-  }
-
-  simulateVendorDetailsSubmitted() {
-    this.vendorStatus = 'requesting';
-  }
-
-  approveVendor() {
-    this.vendorService.approveVendor(this.vendorEmail).subscribe(() => {
-      this.vendorStatus = 'approved';
-    });
   }
 }
