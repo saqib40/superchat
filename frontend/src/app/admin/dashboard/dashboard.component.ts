@@ -1,8 +1,12 @@
+
+
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs/operators';
+import { VendorService } from '../../services/vendor.service';
+
 
 @Component({
   selector: 'app-dashboard',
@@ -14,8 +18,16 @@ import { filter } from 'rxjs/operators';
 export class DashboardComponent implements OnInit {
   vendorEmail: string = '';
   isAddVendorRoute: boolean = false;
+  vendorStatus: 'idle' | 'pending' | 'requesting' | 'approved' = 'idle';
 
-  constructor(private router: Router) {}
+  vendorsOpen:boolean=false;
+
+    toggleVendors() {
+    this.vendorsOpen = !this.vendorsOpen;
+  }
+
+
+  constructor(private router: Router, private vendorService: VendorService) {}
 
   ngOnInit() {
     this.checkCurrentRoute(this.router.url);
@@ -32,12 +44,21 @@ export class DashboardComponent implements OnInit {
   }
 
   sendInvitation() {
-    if (this.vendorEmail) {
-      console.log('Sending invitation to:', this.vendorEmail);
-      alert(`Invitation sent to ${this.vendorEmail}!`);
-      this.vendorEmail = '';
-    } else {
-      alert('Please enter a valid email address.');
+    if (this.vendorEmail.trim()) {
+      // Simulated API call
+      this.vendorService.sendInvitation(this.vendorEmail).subscribe(() => {
+        this.vendorStatus = 'pending';
+      });
     }
+  }
+
+  simulateVendorDetailsSubmitted() {
+    this.vendorStatus = 'requesting';
+  }
+
+  approveVendor() {
+    this.vendorService.approveVendor(this.vendorEmail).subscribe(() => {
+      this.vendorStatus = 'approved';
+    });
   }
 }
