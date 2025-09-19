@@ -34,7 +34,8 @@ builder.Services.AddSingleton(emailConfig);
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LeadershipService>();
 builder.Services.AddScoped<AdminService>();
-builder.Services.AddScoped<EmailService>(); 
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<VendorService>();
 
 // Configuring the AWS S3
 var awsCredentials = new BasicAWSCredentials(
