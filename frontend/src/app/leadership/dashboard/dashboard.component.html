@@ -1,0 +1,50 @@
+<div class="dashboard-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h3 class="sidebar-title">Waters Leadership</h3>
+    <nav>
+      <ul class="main-nav">
+        <li>
+          <a routerLink="/leadership/dashboard" routerLinkActive="active">
+            <span class="material-icons">dashboard</span>
+            Dashboard
+          </a>
+        </li>
+
+        <!-- Vendors Section -->
+        <li>
+          <a routerLink="/leadership/vendors" routerLinkActive="active">
+            <span class="material-icons">group</span>
+            Vendor List
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="welcome-card">
+      <h2>Leadership Dashboard</h2>
+      <p class="subtitle">View-only access to vendor status and system overview</p>
+
+      <div class="overview-grid">
+        <div class="overview-card">
+          <span class="material-icons success">verified</span>
+          <h3>42</h3>
+          <p>Approved Vendors</p>
+        </div>
+        <div class="overview-card">
+          <span class="material-icons warning">pending</span>
+          <h3>8</h3>
+          <p>Pending Invitations</p>
+        </div>
+        <div class="overview-card">
+          <span class="material-icons info">hourglass_bottom</span>
+          <h3>5</h3>
+          <p>Awaiting Approval</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

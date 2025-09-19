@@ -42,10 +42,19 @@ export class LoginComponent {
         this.isSubmitting = false;
       }
     });*/
-    if (email === 'admin@superchat.com' && password === 'admin123') {
+  if (email === 'admin@superchat.com' && password === 'admin123') {
     localStorage.setItem('token', 'dummy-token');
     this.router.navigate(['/admin/dashboard']);
-  } else {
+  } 
+  else if (email === 'lead@superchat.com' && password === 'lead123') {
+    localStorage.setItem('token','dummy-token');
+    this.router.navigate(['/leadership/dashboard']);
+  } 
+  else if (email === 'vendor@superchat.com' && password === 'vendor123') {
+    localStorage.setItem('token','dummy-token');
+    this.router.navigate(['/vendor/dashboard']);
+  }
+  else {
     this.errorMessage = 'Invalid email or password';
     this.isSubmitting = false;
   }
