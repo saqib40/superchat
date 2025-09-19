@@ -54,42 +54,6 @@ namespace backend.Services
             await _context.SaveChangesAsync();
             return true;
         }
-        // Called by an admin-only endpoint to approve the vendor. (move it to AdminService.cs)
-        public async Task<bool> ApproveVendorAsync(int vendorId)
-        {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.Id == vendorId && v.Status == "PendingApproval");
-
-            if (vendor == null || string.IsNullOrEmpty(vendor.PendingPasswordHash))
-            {
-                // Vendor not found or doesn't have pending details.
-                return false;
-            }
-
-            // Create the new User from the stored pending details.
-            var user = new User
-            {
-                Email = vendor.ContactEmail,
-                PasswordHash = vendor.PendingPasswordHash, // Use the already-hashed password
-                FirstName = vendor.PendingFirstName,
-                LastName = vendor.PendingLastName,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync(); // Save to get the new User.Id
-
-            // Finalize the vendor record.
-            vendor.UserId = user.Id;
-            vendor.Status = "Verified";
-
-            // Clear the temporary data.
-            vendor.PendingFirstName = null;
-            vendor.PendingLastName = null;
-            vendor.PendingPasswordHash = null;
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
         private string GenerateJwtToken(User user)
         {
             // Read JWT settings (secret, issuer, audience) directly from environment variables for security.
