@@ -11,12 +11,13 @@ export const routes: Routes = [{
   {
     path: 'admin/vendors',
     loadComponent: () =>
-      import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent) // ✅ Vendor List
+      import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent) 
   },
-   {
-    path: 'admin/add-vendor', // This is the new route
-    loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  },
+  {
+  path: 'admin/add-vendor',
+  loadComponent: () =>
+    import('./admin/add-vendor/add-vendor.component').then(m => m.AddVendorComponent)
+},
   {
   path: 'leadership/dashboard',
   loadComponent: () => import('./leadership/dashboard/dashboard.component').then(m => m.LeadershipDashboardComponent)
@@ -24,12 +25,12 @@ export const routes: Routes = [{
   {
   path: 'vendor/dashboard',
   loadComponent: () => import('./vendor/dashboard/dashboard.component').then(m => m.VendorDashboardComponent)
-},
-{
-  path: 'leadership/vendors',   // 👔 Leadership also gets vendor list
+  },
+  {
+  path: 'leadership/vendors',
   loadComponent: () =>
     import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent)
-},
+  },
   {
     path: '',
     redirectTo: '/login',
