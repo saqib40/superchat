@@ -8,6 +8,11 @@ export const routes: Routes = [{
      path: 'admin/dashboard',
      loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
+  {
+    path: 'admin/vendors',
+    loadComponent: () =>
+      import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent) // ✅ Vendor List
+  },
    {
     path: 'admin/add-vendor', // This is the new route
     loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
@@ -19,6 +24,11 @@ export const routes: Routes = [{
   {
   path: 'vendor/dashboard',
   loadComponent: () => import('./vendor/dashboard/dashboard.component').then(m => m.VendorDashboardComponent)
+},
+{
+  path: 'leadership/vendors',   // 👔 Leadership also gets vendor list
+  loadComponent: () =>
+    import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent)
 },
   {
     path: '',

@@ -1,0 +1,53 @@
+<div class="welcome-card vendor-list-root">
+  <div class="header-row">
+    <h2>Vendor List</h2>
+    <p class="subtitle">All vendors currently in the system</p>
+  </div>
+
+  <!-- Controls (future: search / filters) -->
+  <div class="controls">
+    <input type="search" placeholder="Search vendors (name or email)" disabled />
+    <!-- disabled for now; quick visual for future functionality -->
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="vendors.length === 0" class="empty-state">
+    <p>No vendors yet — backend integration pending.</p>
+  </div>
+
+  <!-- Table -->
+  <div *ngIf="vendors.length > 0" class="table-wrap">
+    <table class="vendor-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of vendors">
+          <td>{{ v.name }}</td>
+          <td>{{ v.email }}</td>
+          <td>
+            <span
+              class="status-chip"
+              [ngClass]="{
+                'status-approved': v.status === 'approved',
+                'status-pending': v.status === 'pending',
+                'status-requesting': v.status === 'requesting'
+              }"
+            >
+              {{ statusLabel(v.status) }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="footnote">
+    <small>Data placeholder — will fetch from API once backend is available.</small>
+  </div>
+</div>
+
