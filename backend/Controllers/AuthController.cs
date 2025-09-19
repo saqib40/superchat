@@ -50,19 +50,5 @@ namespace backend.Controllers
 
             return Ok(new { message = "Your details have been submitted for admin approval." });
         }
-        // This is the admin-only endpoint to approve a vendor. (move it to AdminController.cs)
-        [HttpPost("approve-vendor/{vendorId}")]
-        [Authorize(Roles = "Admin")] // IMPORTANT: Protects this route
-        public async Task<IActionResult> ApproveVendor(int vendorId)
-        {
-            var success = await _authService.ApproveVendorAsync(vendorId);
-
-            if (!success)
-            {
-                return BadRequest(new { message = "Vendor approval failed. The vendor may not exist or is not pending approval." });
-            }
-
-            return Ok(new { message = "Vendor approved successfully and user account created." });
-        }
     }
 }

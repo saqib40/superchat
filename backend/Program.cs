@@ -22,9 +22,19 @@ var connectionString = $"Server={dbHost},{dbPort};Database={dbName};User Id={dbU
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+var emailConfig = new EmailConfig
+{
+    SendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+};
+// singleton service so it can be injected into other classes.
+builder.Services.AddSingleton(emailConfig);
+
+
 // --- Add Custom Services ---
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LeadershipService>();
+builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<EmailService>(); 
 
 // Configuring the AWS S3
 var awsCredentials = new BasicAWSCredentials(
