@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "riGdlT5d0jk=",
+  "success": true,
+  "projectFilePath": "/home/conshus/projects/superchat/CreatingPasswords/CreatingPasswords.csproj",
+  "expectedPackageFiles": [
+    "/home/conshus/.nuget/packages/bcrypt.net-next/4.0.3/bcrypt.net-next.4.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
