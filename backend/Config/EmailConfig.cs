@@ -2,6 +2,6 @@ namespace backend.Config
 {
     public class EmailConfig
     {
-        public string SendGridApiKey { get; set; }
+        public string SendGridApiKey { get; set; } = string.Empty;
     }
 }

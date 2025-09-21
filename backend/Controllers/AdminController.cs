@@ -2,14 +2,10 @@ using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using backend.DTOs;
 
 namespace backend.Controllers
 {
-    // DTOs (Data Transfer Objects) are defined here as 'records' for simplicity.
-    // They define the expected shape of the JSON request bodies for creating and rejecting vendors.
-    public record CreateVendorRequest(string CompanyName, string ContactEmail);
-    public record RejectVendorRequest(string? Reason);
-
     [ApiController] // Enables standard API behaviors.
     [Route("api/[controller]")] // Sets the base route to /api/admin.
     [Authorize(Roles = "Admin")] // Secures ALL endpoints in this controller, allowing access only to users with the "Admin" role.
@@ -26,13 +22,13 @@ namespace backend.Controllers
         [HttpPost("vendors")]
         public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest request)
         {
-            // Get the ID of the currently logged-in admin from their JWT claims.
-            // This ensures we can track who created the vendor.
-            var adminId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            
-            // Delegate the creation logic to the service.
+            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(adminIdString) || !int.TryParse(adminIdString, out var adminId))
+            {
+                // If the ID is missing or not a valid integer, the token is invalid.
+                return Unauthorized("Invalid user token.");
+            }
             var vendor = await _adminService.CreateVendorAsync(request.CompanyName, request.ContactEmail, adminId);
-            
             // Return a 201 Created response. This is a RESTful best practice.
             // It includes a "Location" header pointing to the new resource's URL and the new vendor object in the body.
             return CreatedAtAction(nameof(GetVendorById), new { id = vendor.Id }, vendor);

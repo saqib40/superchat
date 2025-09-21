@@ -1,33 +1,11 @@
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using backend.DTOs;
 
 namespace backend.Controllers
 {
-    // --- DTOs (Data Transfer Objects) defined directly in the controller file for simplicity ---
-    public class CreateEmployeeDto
-    {
-        [Required]
-        public string FirstName { get; set; }
-        [Required]
-
-        public string LastName { get; set; }
-        public string? JobTitle { get; set; }
-        // IFormFile is the standard type in ASP.NET Core for representing an uploaded file.
-        public IFormFile? ResumeFile { get; set; }
-    }
-
-    public class UpdateEmployeeDto
-    {
-        [Required]
-        public string FirstName { get; set; }
-        [Required]
-        public string LastName { get; set; }
-        public string? JobTitle { get; set; }
-    }
-
     [ApiController]
     [Route("api/[controller]")] // Sets the base route for all endpoints here to /api/vendor.
     [Authorize(Roles = "Vendor")]

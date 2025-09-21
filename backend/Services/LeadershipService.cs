@@ -1,8 +1,8 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using backend.Config;
-using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using backend.DTOs;
 
 namespace backend.Services
 {
@@ -17,7 +17,7 @@ namespace backend.Services
         }
 
         // Provides a generic search capability across different entity types (vendors or employees).
-        public async Task<object> SearchAsync(string type, string query)
+        public async Task<SearchResultDto> SearchAsync(string type, string query)
         {
             // Basic validation to prevent empty searches.
             if (string.IsNullOrWhiteSpace(query))
@@ -29,16 +29,20 @@ namespace backend.Services
             {
                 // Use Entity Framework Core's LINQ capabilities to query the database.
                 // .Where() filters the records. .Contains() translates to a 'LIKE %...%' SQL query.
-                return await _context.Vendors
+                var results = await _context.Vendors
                     .Where(v => v.CompanyName.Contains(query))
-                    .ToListAsync();
+                    .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactEmail, v.Status, v.CreatedAt, v.AddedByAdminId))
+                    .ToListAsync<object>();
+                return new SearchResultDto("Vendor", results);
             }
             if (type.Equals("employee", StringComparison.OrdinalIgnoreCase))
             {
                 // Here, we search by concatenating the first and last names.
-                return await _context.Employees
+                var results = await _context.Employees
                     .Where(e => (e.FirstName + " " + e.LastName).Contains(query))
-                    .ToListAsync();
+                    .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle))
+                    .ToListAsync<object>();
+                return new SearchResultDto("Employee", results);
             }
 
             // If the 'type' is not recognized, return null.
@@ -46,23 +50,32 @@ namespace backend.Services
         }
 
         // Fetches all vendor data for the main leadership dashboard.
-        public async Task<IEnumerable<Vendor>> GetDashboardAsync()
+        public async Task<IEnumerable<VendorDto>> GetDashboardAsync()
         {
             // .Include(v => v.Employees) is called "eager loading".
             // It tells EF Core to fetch all vendors AND their related employees in a single, efficient database query.
-            return await _context.Vendors.Include(v => v.Employees).ToListAsync();
+            return await _context.Vendors
+                .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactEmail, v.Status, v.CreatedAt, v.AddedByAdminId))
+                .ToListAsync();
         }
 
         // Retrieves a single vendor by their ID, including all their associated employees.
-        public async Task<Vendor?> GetVendorByIdAsync(int vendorId)
+        public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
         {
             return await _context.Vendors
-                .Include(v => v.Employees) // Eager load the employees for this vendor.
-                .FirstOrDefaultAsync(v => v.Id == vendorId); // Find the first match or return null.
+                .Where(v => v.Id == vendorId)
+                .Select(v => new VendorDetailDto(
+                    v.Id,
+                    v.CompanyName,
+                    v.ContactEmail,
+                    v.Status,
+                    v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle)).ToList()
+                ))
+                .FirstOrDefaultAsync();
         }
 
         // Retrieves a single employee's details and generates a secure, temporary link to their resume.
-        public async Task<object?> GetEmployeeByIdAsync(int vendorId, int employeeId)
+        public async Task<EmployeeDetailDto?> GetEmployeeByIdAsync(int vendorId, int employeeId)
         {
             // Query for the employee, ensuring they belong to the specified vendor for security.
             var employee = await _context.Employees
@@ -79,17 +92,7 @@ namespace backend.Services
                 resumeUrl = GeneratePresignedUrl(employee.ResumeS3Key);
             }
 
-            // Return a new anonymous object. This allows us to create a custom response shape
-            // that includes all the standard employee data PLUS the dynamically generated download URL.
-            return new 
-            {
-                employee.Id,
-                employee.FirstName,
-                employee.LastName,
-                employee.JobTitle,
-                employee.VendorId,
-                ResumeDownloadUrl = resumeUrl
-            };
+            return new EmployeeDetailDto(employee.Id, employee.FirstName, employee.LastName, employee.JobTitle, employee.VendorId, resumeUrl);
         }
 
         // This private helper method generates a secure, temporary URL for a private S3 object.

@@ -3,7 +3,7 @@ using Amazon.S3.Model;
 using backend.Config;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
-using backend.Controllers;
+using backend.DTOs;
 
 namespace backend.Services
 {
@@ -21,21 +21,22 @@ namespace backend.Services
         }
 
         // Retrieves all employees that belong to the currently logged-in vendor.
-        public async Task<IEnumerable<Employee>> GetEmployeesAsync(int vendorUserId)
+        public async Task<IEnumerable<EmployeeDto>> GetEmployeesAsync(int vendorUserId)
         {
             // First, find the Vendor record associated with the logged-in user's ID.
             var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUserId);
             // If for some reason the user isn't linked to a vendor, return an empty list.
-            if (vendor == null) return new List<Employee>();
+            if (vendor == null) return new List<EmployeeDto>();
 
             // Return all employees whose VendorId matches the found vendor's ID.
             return await _context.Employees
                 .Where(e => e.VendorId == vendor.Id)
+                .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle))
                 .ToListAsync();
         }
 
         // Retrieves a single employee by their ID, ensuring they belong to the logged-in vendor.
-        public async Task<Employee?> GetEmployeeByIdAsync(int employeeId, int vendorUserId)
+        public async Task<EmployeeDto?> GetEmployeeByIdAsync(int employeeId, int vendorUserId)
         {
             var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUserId);
             if (vendor == null) return null;
@@ -43,11 +44,13 @@ namespace backend.Services
             // This query is crucial for security: it checks both the employee's ID AND that their
             // VendorId matches the logged-in vendor's ID. This prevents one vendor from accessing another's employees.
             return await _context.Employees
-                .FirstOrDefaultAsync(e => e.Id == employeeId && e.VendorId == vendor.Id);
+                .Where(e => e.Id == employeeId && e.VendorId == vendor.Id)
+                .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle))
+                .FirstOrDefaultAsync();
         }
 
         // Creates a new employee and uploads their resume to S3 if provided.
-        public async Task<Employee?> CreateEmployeeAsync(CreateEmployeeDto dto, int vendorUserId)
+        public async Task<EmployeeDto?> CreateEmployeeAsync(CreateEmployeeDto dto, int vendorUserId)
         {
             var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUserId);
             if (vendor == null) return null;
@@ -87,11 +90,11 @@ namespace backend.Services
 
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
-            return employee;
+            return new EmployeeDto(employee.Id, employee.FirstName, employee.LastName, employee.JobTitle);
         }
 
         // Updates an existing employee's details.
-        public async Task<Employee?> UpdateEmployeeAsync(int employeeId, UpdateEmployeeDto dto, int vendorUserId)
+        public async Task<EmployeeDto?> UpdateEmployeeAsync(int employeeId, UpdateEmployeeDto dto, int vendorUserId)
         {
             var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUserId);
             if (vendor == null) return null;
@@ -109,7 +112,7 @@ namespace backend.Services
 
             // Commit the changes to the database.
             await _context.SaveChangesAsync();
-            return employee;
+            return new EmployeeDto(employee.Id, employee.FirstName, employee.LastName, employee.JobTitle);
 
             // will add later
             // support for updating the resume

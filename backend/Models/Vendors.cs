@@ -10,15 +10,15 @@ namespace backend.Models
 
         [Required]
         [MaxLength(255)]
-        public string CompanyName { get; set; }
+        public string CompanyName { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(256)]
-        public string ContactEmail { get; set; }
+        public string ContactEmail { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; }
+        public string Status { get; set; } = string.Empty;
 
         public Guid? VerificationToken { get; set; }
         public DateTime? TokenExpiry { get; set; }

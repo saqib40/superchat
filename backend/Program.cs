@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,13 +70,7 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        // This tells the serializer to handle object cycles by replacing them
-        // with references instead of throwing an exception cause it was throwing exceptions
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-    });
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -116,8 +109,14 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // In production, use the custom error handler.
+    app.UseExceptionHandler("/error");
 }
 
 app.UseHttpsRedirection();
