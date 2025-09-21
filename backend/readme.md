@@ -34,4 +34,9 @@ docker exec -it mssql_server /bin/bash
 # connect to sql server
 /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Password123' -C
 # run sql queries
+# or
+# to run sql queries from seed.sql
+# get into backend directory
+docker cp seed.sql mssql_server:/tmp/seed.sql
+docker exec mssql_server /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Password123' -d superchat -i /tmp/seed.sql -C
 ```

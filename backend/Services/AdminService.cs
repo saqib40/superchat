@@ -49,6 +49,13 @@ namespace backend.Services
             // Also ensure they have submitted a password. If not, something is wrong, so we fail.
             if (vendor == null || string.IsNullOrEmpty(vendor.PendingPasswordHash)) return false;
             
+            // 1. Find the 'Vendor' role in the database.
+            var vendorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Vendor");
+            if (vendorRole == null)
+            {
+                // Handle case where 'Vendor' role doesn't exist
+                return false; 
+            }
             // If the vendor is valid, create a new User account for them using the temporarily stored details.
             var user = new User
             {
@@ -57,6 +64,7 @@ namespace backend.Services
                 FirstName = vendor.PendingFirstName,
                 LastName = vendor.PendingLastName,
             };
+            user.Roles.Add(vendorRole);
             _context.Users.Add(user);
             // Save the user to the database to generate their new ID.
             await _context.SaveChangesAsync();

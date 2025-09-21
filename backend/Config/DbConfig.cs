@@ -16,6 +16,12 @@ namespace backend.Config
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<Role>().HasData(
+                new Role { Id = 1, Name = "Admin" },
+                new Role { Id = 2, Name = "Leadership" },
+                new Role { Id = 3, Name = "Vendor" }
+            );
+
             // Configure the many-to-many relationship between User and Role
             // This automatically creates the 'UserRoles' join table
             modelBuilder.Entity<User>()
