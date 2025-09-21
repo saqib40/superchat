@@ -1,0 +1,106 @@
+<div class="vendor-layout">
+  <!-- Header -->
+  <div class="vendor-header bg-white shadow-md p-4 flex justify-between items-center">
+    <div class="flex items-center gap-4">
+      <button (click)="toggleSidebar()" class="md:hidden btn-secondary">☰</button>
+      <h1 class="text-2xl font-bold text-primary-700">Vendor Portal</h1>
+    </div>
+    <div class="flex items-center gap-4">
+      <span class="text-gray-600">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</span>
+      <span class="text-sm text-gray-500">({{ currentUser?.companyName }})</span>
+      <button (click)="logout()" class="btn-secondary">Logout</button>
+    </div>
+  </div>
+
+  <div class="vendor-content flex">
+    <!-- Sidebar -->
+    <div class="vendor-sidebar" [class.open]="isSidebarOpen">
+      <div class="sidebar-content bg-white border-r p-4">
+        <div class="brand mb-8">
+          <h2 class="text-lg font-semibold text-primary-600">Employee Management</h2>
+        </div>
+        <nav class="space-y-2">
+          <a routerLink="/vendor/employees" 
+             routerLinkActive="active"
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-primary-50 transition-colors">
+            <span class="icon">👥</span>
+            <span>My Employees</span>
+          </a>
+          <a routerLink="/vendor/employees/add" 
+             routerLinkActive="active"
+             class="nav-link flex items-center gap-3 p-3 rounded-lg hover:bg-primary-50 transition-colors">
+            <span class="icon">➕</span>
+            <span>Add Employee</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Mobile overlay -->
+    <div *ngIf="isSidebarOpen" class="mobile-overlay md:hidden" (click)="toggleSidebar()"></div>
+
+    <!-- Main content -->
+    <div class="main-content flex-1 p-6">
+      <router-outlet></router-outlet>
+    </div>
+  </div>
+</div>
+
+<style>
+.vendor-layout {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.vendor-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.vendor-content {
+  height: calc(100vh - 80px);
+}
+
+.vendor-sidebar {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.3s ease;
+}
+
+@media (min-width: 768px) {
+  .vendor-sidebar {
+    width: 256px;
+  }
+}
+
+.vendor-sidebar.open {
+  width: 256px;
+  position: fixed;
+  height: 100%;
+  z-index: 40;
+  background: white;
+}
+
+.sidebar-content {
+  width: 256px;
+  height: 100%;
+}
+
+.nav-link.active {
+  background-color: #dbeafe;
+  color: #1d4ed8;
+  border-left: 4px solid #3b82f6;
+}
+
+.mobile-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 35;
+}
+
+.main-content {
+  overflow-y: auto;
+}
+</style>
