@@ -35,6 +35,20 @@ export class VendorListComponent {
     }
   }
 
+  approveVendor(v: Vendor) {
+  v.status = 'approved';
+}
+
+rejectVendor(v: Vendor) {
+  const confirmDelete = window.confirm(
+    `Are you sure you want to reject vendor "${v.name}"? This action cannot be undone.`
+  );
+
+  if (confirmDelete) {
+    this.vendors = this.vendors.filter(x => x !== v);
+  }
+}
+
   get filteredVendors(): Vendor[] {
     if (!this.searchTerm.trim()) {
       return this.vendors;

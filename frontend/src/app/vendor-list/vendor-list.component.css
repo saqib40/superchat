@@ -177,3 +177,32 @@
   font-size: 0.9rem;
 }
 
+.primary-btn {
+  background: #0077c8;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-right: 6px;
+  transition: background 0.2s;
+}
+.primary-btn:hover {
+  background: #005fa3;
+}
+
+.danger-btn {
+  background: #dc3545;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+.danger-btn:hover {
+  background: #b52a37;
+}
+

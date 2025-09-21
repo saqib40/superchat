@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { SetupVendorComponent } from './vendor/setup-vendor/setup-vendor.component';
 
 export const routes: Routes = [
   {
@@ -9,10 +10,7 @@ export const routes: Routes = [
     path: 'admin/dashboard',
     loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
   },
-  {
-    path: 'admin/add-vendor', // This is the new route
-    loadComponent: () => import('./admin/dashboard/dashboard.component').then(m => m.DashboardComponent)
-  },
+  
   {
     path: 'admin/vendors',
     loadComponent: () =>
@@ -36,6 +34,11 @@ export const routes: Routes = [
   loadComponent: () =>
     import('./vendor-list/vendor-list.component').then(m => m.VendorListComponent)
   },
+
+  {
+  path: 'setup-vendor/:token',
+  loadComponent: () => import('./vendor/setup-vendor/setup-vendor.component').then(m => m.SetupVendorComponent)
+},
   {
     path: '',
     redirectTo: '/login',

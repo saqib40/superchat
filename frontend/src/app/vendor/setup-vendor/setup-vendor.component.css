@@ -1,0 +1,76 @@
+.setup-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  background: #f4f6f9;
+}
+
+.card {
+  width: 100%;
+  max-width: 520px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 26px;
+  box-shadow: 0 6px 24px rgba(2,6,23,0.06);
+}
+
+.card-title {
+  margin: 0 0 6px 0;
+  font-size: 1.35rem;
+  color: #002b45;
+}
+
+.subtitle {
+  color: #7c8f9f;
+  margin-bottom: 14px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 3px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.primary-btn {
+  display: inline-flex;
+  align-items: center;
+  background: #0077c8;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary-btn {
+  background: #f1f5f9;
+  color: #333;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.status-box {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #edecec;
+  background: #de3131;
+}
