@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private apiUrl = '/api/auth';
+  private apiUrl = '/api/Auth';
 
   constructor(private http: HttpClient) {}
 
@@ -13,6 +13,6 @@ export class AuthService {
   }
 
    submitVendorDetails(token: string, payload: { firstName: string; lastName: string; password: string; }): Observable<any> {
-    return this.http.post(`${this.apiUrl}/auth/submit-vendor-details/${token}`, payload);
+    return this.http.post(`${this.apiUrl}/submit-vendor-details/${token}`, payload);
   }
 }

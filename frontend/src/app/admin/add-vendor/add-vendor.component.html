@@ -40,13 +40,13 @@
     </div>
 
     <div *ngIf="vendorStatus === 'requesting'" class="status-box info">
-      <span class="material-icons">hourglass_bottom</span>
-      Vendor submitted details. Awaiting approval.
-      <button (click)="approveVendor()" class="secondary-btn">
-        <span class="material-icons">check_circle</span>
-        Approve Vendor
-      </button>
-    </div>
+  <span class="material-icons">hourglass_bottom</span>
+  Vendor submitted details. Awaiting approval.
+  <button routerLink="/admin/vendors" class="secondary-btn">
+    <span class="material-icons">check_circle</span>
+    Go to Vendor List
+  </button>
+</div>
 
     <div *ngIf="vendorStatus === 'approved'" class="status-box success">
       <span class="material-icons">verified</span>

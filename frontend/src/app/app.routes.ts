@@ -39,6 +39,14 @@ export const routes: Routes = [
   path: 'setup-vendor/:token',
   loadComponent: () => import('./vendor/setup-vendor/setup-vendor.component').then(m => m.SetupVendorComponent)
 },
+{
+  path: 'vendors/:id',
+  loadComponent: () =>
+    import('./vendor-profile/vendor-profile.component').then(
+      (m) => m.VendorProfileComponent
+    ),
+}
+,
   {
     path: '',
     redirectTo: '/login',

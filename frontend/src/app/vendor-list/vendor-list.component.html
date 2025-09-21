@@ -26,13 +26,13 @@
           <th>Name</th>
           <th>Email</th>
           <th>Status</th>
-          <th>Actions</th> <!-- ✅ new -->
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let v of filteredVendors">
-          <td>{{ v.name }}</td>
-          <td>{{ v.email }}</td>
+          <td>{{ v.companyName }}</td>
+          <td>{{ v.contactEmail }}</td>
           <td>
             <span
               class="status-chip"
@@ -46,15 +46,21 @@
             </span>
           </td>
           <td>
+            <!-- Pending vendors: Approve + Reject -->
             <ng-container *ngIf="v.status === 'pending'">
               <button class="primary-btn" (click)="approveVendor(v)">Approve</button>
               <button class="danger-btn" (click)="rejectVendor(v)">Reject</button>
             </ng-container>
 
+            <!-- Approved vendors: Delete only -->
             <ng-container *ngIf="v.status === 'approved'">
-              ✅ Approved
+               <button class="profile-btn" [routerLink]="['/vendors', v.id]">
+      <span class="icon">👤</span> View Profile
+    </button>
+              <button class="danger-btn" (click)="deleteVendor(v)">Delete</button>
             </ng-container>
 
+            <!-- Requesting vendors: no actions -->
             <ng-container *ngIf="v.status === 'requesting'">
               ⏳ Awaiting Submission
             </ng-container>
@@ -63,8 +69,8 @@
       </tbody>
     </table>
   </div>
-
+<!--
   <div class="footnote">
     <small>Data placeholder — will fetch from API once backend is available.</small>
-  </div>
+  </div>-->
 </div>
