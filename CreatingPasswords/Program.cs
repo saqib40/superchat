@@ -28,9 +28,13 @@ class Program
         Console.WriteLine("--- BCrypt Password Hashing ---");
         
         // Call the function with a sample password
-        HashAndDisplay("MySuperSecretPassword123");
+        HashAndDisplay("hlo123");
 
         // Call it again with a different password
-        HashAndDisplay("AnotherSecureP@ssw0rd");
+        HashAndDisplay("hii12345");
+
+	HashAndDisplay("12345");
+
+	HashAndDisplay("1234");
     }
 }

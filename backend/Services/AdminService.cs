@@ -1,6 +1,7 @@
 using backend.Config;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using backend.DTOs;
 
 namespace backend.Services
 {
@@ -15,7 +16,7 @@ namespace backend.Services
         }
 
         // Handles the creation of a new vendor and kicks off the invitation process.
-        public async Task<Vendor?> CreateVendorAsync(string companyName, string contactEmail, int adminId)
+        public async Task<VendorDto?> CreateVendorAsync(string companyName, string contactEmail, int adminId)
         {
             // Create a new Vendor object in memory with the initial details.
             var vendor = new Vendor
@@ -38,7 +39,7 @@ namespace backend.Services
             await _emailService.SendInvitationEmailAsync(vendor.ContactEmail, vendor.VerificationToken.Value);
 
             // Return the newly created vendor object.
-            return vendor;
+            return new VendorDto(vendor.Id, vendor.CompanyName, vendor.ContactEmail, vendor.Status, vendor.CreatedAt, vendor.AddedByAdminId);
         }
 
         // Approves a vendor who has submitted their details.
@@ -49,6 +50,13 @@ namespace backend.Services
             // Also ensure they have submitted a password. If not, something is wrong, so we fail.
             if (vendor == null || string.IsNullOrEmpty(vendor.PendingPasswordHash)) return false;
             
+            // 1. Find the 'Vendor' role in the database.
+            var vendorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Vendor");
+            if (vendorRole == null)
+            {
+                // Handle case where 'Vendor' role doesn't exist
+                return false; 
+            }
             // If the vendor is valid, create a new User account for them using the temporarily stored details.
             var user = new User
             {
@@ -57,6 +65,7 @@ namespace backend.Services
                 FirstName = vendor.PendingFirstName,
                 LastName = vendor.PendingLastName,
             };
+            user.Roles.Add(vendorRole);
             _context.Users.Add(user);
             // Save the user to the database to generate their new ID.
             await _context.SaveChangesAsync();
@@ -94,19 +103,29 @@ namespace backend.Services
             // Later we can add logic here to email the vendor about the rejection, possibly including the reason.
             return true;
         }
-        
+
         // Retrieves a list of all vendors in the system.
-        public async Task<IEnumerable<Vendor>> GetAllVendorsAsync()
+        public async Task<IEnumerable<VendorDto>> GetAllVendorsAsync()
         {
             // A simple query to get all records from the Vendors table.
-            return await _context.Vendors.ToListAsync();
+            return await _context.Vendors
+                .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactEmail, v.Status, v.CreatedAt, v.AddedByAdminId))
+                .ToListAsync();
         }
 
         // Retrieves a single vendor by their ID, including their list of employees.
-        public async Task<Vendor?> GetVendorByIdAsync(int vendorId)
+        public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
         {
-            // .Include() tells Entity Framework to also load the related Employee data in the same query (eager loading).
-            return await _context.Vendors.Include(v => v.Employees).FirstOrDefaultAsync(v => v.Id == vendorId);
+            return await _context.Vendors
+                .Where(v => v.Id == vendorId)
+                .Select(v => new VendorDetailDto(
+                    v.Id,
+                    v.CompanyName,
+                    v.ContactEmail,
+                    v.Status,
+                    v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle)).ToList()
+                ))
+                .FirstOrDefaultAsync();
         }
 
         // Deletes a vendor from the database.

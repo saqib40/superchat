@@ -7,12 +7,13 @@
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using backend.DTOs;
 
 namespace backend.Controllers
 {
     // Records for our request bodies.
-    public record LoginRequest(string Email, string Password);
-    public record VendorSubmissionRequest(string FirstName, string LastName, string Password);
+    //public record LoginRequest(string Email, string Password);
+    //public record VendorSubmissionRequest(string FirstName, string LastName, string Password);
 
     [ApiController]
     [Route("api/[controller]")]

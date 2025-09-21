@@ -1,12 +1,14 @@
 using DotNetEnv;
 using backend.Config;
 using backend.Services;
+using Amazon;
 using Amazon.S3;
 using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,8 +46,7 @@ var awsCredentials = new BasicAWSCredentials(
 );
 var awsConfig = new AmazonS3Config
 {
-    ServiceURL = Environment.GetEnvironmentVariable("S3_ENDPOINT"),
-    ForcePathStyle = true // Important for S3-compatible services like MinIO
+    RegionEndpoint = RegionEndpoint.GetBySystemName(Environment.GetEnvironmentVariable("AWS_REGION"))
 };
 builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(awsCredentials, awsConfig));
 
@@ -71,14 +72,51 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    // Add a general description for the Swagger page
+    options.SwaggerDoc("v1", new OpenApiInfo { Title = "My Vendor API", Version = "v1" });
+
+    // 1. Define the security scheme (JWT Bearer)
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "Bearer"
+    });
+
+    // 2. Add a global security requirement to use the Bearer scheme
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
+});
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+else
+{
+    // In production, use the custom error handler.
+    app.UseExceptionHandler("/error");
 }
 
 app.UseHttpsRedirection();
