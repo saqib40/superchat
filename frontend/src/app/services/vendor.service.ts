@@ -2,8 +2,9 @@
 
 // src/app/services/vendor.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+
 
 export interface Vendor {
   id: number;
@@ -14,40 +15,58 @@ export interface Vendor {
 
 @Injectable({ providedIn: 'root' })
 export class VendorService {
-  private apiUrl = 'http://localhost:5138/api/Admin/vendors'; // adjust base URL as needed
+  private apiUrl = 'http://localhost:5138/api/Admin/vendors';
 
   constructor(private http: HttpClient) {}
 
-  // Send invitation with companyName + email
-  sendInvitation(companyName: string, email: string): Observable<any> {
-    return this.http.post(`${this.apiUrl}`, { companyName, contactEmail: email });
+  private getAuthHeaders(): HttpHeaders {
+    const token = localStorage.getItem('token');
+    return new HttpHeaders({
+      'Authorization': token ? `Bearer ${token}` : '',
+      'Content-Type': 'application/json'
+    });
   }
 
-  // Approve vendor
-   getVendors(): Observable<Vendor[]> {
-    return this.http.get<Vendor[]>(this.apiUrl);
-  }
-
-  // ✅ Approve vendor
-  approveVendor(id: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}/approve`, {});
-  }
-
-  // ✅ Reject vendor (or delete if backend expects that)
-  rejectVendor(id: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}/reject`, {});
-    // If backend deletes instead, use:
-    // return this.http.delete(`${this.apiUrl}/${id}`);
-  }
-
-  deleteVendor(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
-  }
-
-  getVendorById(id: number): Observable<any> {
-  return this.http.get<any>(`${this.apiUrl}/${id}`);
+  getVendors(): Observable<Vendor[]> {
+  return this.http.get<Vendor[]>(this.apiUrl, {
+    headers: this.getAuthHeaders()
+  });
 }
 
+approveVendor(id: number): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/${id}/approve`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
 
+  sendInvitation(companyName: string, contactEmail: string): Observable<any> {
+    return this.http.post(
+      this.apiUrl,
+      { companyName, contactEmail },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  rejectVendor(id: number): Observable<any> {
+  return this.http.put(`${this.apiUrl}/${id}/reject`, {}, {
+    headers: this.getAuthHeaders()
+  });
+  // If backend deletes instead, use:
+  // return this.http.delete(`${this.apiUrl}/${id}`, { headers: this.getAuthHeaders() });
+}
+
+deleteVendor(id: number): Observable<any> {
+  return this.http.delete(`${this.apiUrl}/${id}`, {
+    headers: this.getAuthHeaders()
+  });
+}
+
+getVendorById(id: number): Observable<any> {
+  return this.http.get<any>(`${this.apiUrl}/${id}`, {
+    headers: this.getAuthHeaders()
+  });
+}
 }
 
