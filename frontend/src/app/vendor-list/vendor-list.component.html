@@ -4,7 +4,6 @@
     <p class="subtitle">All vendors currently in the system</p>
   </div>
 
-  <!-- Controls -->
   <div class="controls">
     <input
       type="search"
@@ -13,12 +12,10 @@
     />
   </div>
 
-  <!-- Empty state -->
   <div *ngIf="filteredVendors.length === 0" class="empty-state">
     <p>No vendors found.</p>
   </div>
 
-  <!-- Table -->
   <div *ngIf="filteredVendors.length > 0" class="table-wrap">
     <table class="vendor-table">
       <thead>
@@ -26,7 +23,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>Status</th>
-          <th>Actions</th>
+          <th *ngIf="userRole === 'Admin'">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -38,36 +35,27 @@
               class="status-chip"
               [ngClass]="{
                 'status-approved': v.status === 'Verified',
-                'status-pending': v.status === 'PendingApproval',
+                'status-pending': v.status === 'PendingApproval'
               }"
             >
               {{ statusLabel(v.status) }}
             </span>
           </td>
-          <td>
-            <!-- Pending vendors: Approve + Reject -->
+          <td *ngIf="userRole === 'Admin'">
             <ng-container *ngIf="v.status === 'PendingApproval'">
               <button class="primary-btn" (click)="approveVendor(v)">Approve</button>
               <button class="danger-btn" (click)="rejectVendor(v)">Reject</button>
             </ng-container>
 
-            <!-- Approved vendors: Delete only -->
             <ng-container *ngIf="v.status === 'Verified'">
                <button class="profile-btn" [routerLink]="['/vendors', v.id]">
-      <span class="icon">👤</span> View Profile
-    </button>
+                  <span class="icon">👤</span> View Profile
+               </button>
               <button class="danger-btn" (click)="deleteVendor(v)">Delete</button>
             </ng-container>
-
-            <!-- Requesting vendors: no actions -->
-         
           </td>
         </tr>
       </tbody>
     </table>
   </div>
-<!--
-  <div class="footnote">
-    <small>Data placeholder — will fetch from API once backend is available.</small>
-  </div>-->
 </div>

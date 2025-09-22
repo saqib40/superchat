@@ -27,7 +27,7 @@ namespace backend.Services
             var to = new EmailAddress(vendorEmail);
             var subject = "You're Invited to Join Our Vendor Platform";
 
-            var setupUrl = $"http://localhost:4200/vendor-setup/{token}";
+            var setupUrl = $"http://localhost:4200/setup-vendor/{token}";
             var plainTextContent = $"Please complete your registration by clicking this link: {setupUrl}";
             var htmlContent = $"<strong>Please complete your registration by clicking this link:</strong> <a href='{setupUrl}'>Complete Registration</a>";
 

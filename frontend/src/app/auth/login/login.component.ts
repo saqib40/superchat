@@ -30,33 +30,32 @@ export class LoginComponent {
 
     this.isSubmitting = true;
     this.errorMessage = '';
-    const{email,password}=this.loginForm.value;
-  /*
+
     this.authService.login(this.loginForm.value).subscribe({
       next: (res: {token: string }) => {
         localStorage.setItem('token', res.token);
-        this.router.navigate(['/admin/dashboard']);
+        const role = this.authService.getUserRole();
+        
+        // Debugging Step: Check the actual role in the browser console
+        console.log('Decoded Role from Token:', role); 
+
+        // Role-based navigation to dashboards
+        if (role === 'Admin') {
+          this.router.navigate(['/admin/dashboard']);
+        } else if (role === 'Leadership') {
+          this.router.navigate(['/leadership/dashboard']);
+        } else if (role === 'Vendor') {
+          this.router.navigate(['/vendor/dashboard']);
+        } else {
+          // Fix 1: Reset the submitting flag so the UI isn't stuck
+          this.isSubmitting = false; 
+          this.errorMessage = 'Invalid role received from token.';
+        }
       },
       error: () => {
         this.errorMessage = 'Invalid email or password';
         this.isSubmitting = false;
       }
-    });*/
-  if (email === 'admin@superchat.com' && password === 'admin123') {
-    localStorage.setItem('token', 'dummy-token');
-    this.router.navigate(['/admin/dashboard']);
-  } 
-  else if (email === 'lead@superchat.com' && password === 'lead123') {
-    localStorage.setItem('token','dummy-token');
-    this.router.navigate(['/leadership/dashboard']);
-  } 
-  else if (email === 'vendor@superchat.com' && password === 'vendor123') {
-    localStorage.setItem('token','dummy-token');
-    this.router.navigate(['/vendor/dashboard']);
-  }
-  else {
-    this.errorMessage = 'Invalid email or password';
-    this.isSubmitting = false;
-  }
+    });
   }
 }

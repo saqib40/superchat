@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorService, Vendor } from '../services/vendor.service';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-vendor-list',
@@ -15,12 +16,23 @@ export class VendorListComponent implements OnInit {
   searchTerm: string = '';
   vendors: Vendor[] = [];
   loading = false;
+  userRole: 'Admin' | 'Leadership' | 'Vendor' | null = null;
 
+  constructor(private vendorService: VendorService, private authService: AuthService) {}
+
+<<<<<<< HEAD
+=======
   constructor(private vendorService: VendorService) {}
-
+  /*
   ngOnInit(): void {
     
      this.loadVendors();
+  }
+    */
+>>>>>>> c3cc69d23f7146d78ff6868b404f2df5e1bbb609
+  ngOnInit(): void {
+    this.userRole = this.authService.getUserRole();
+    this.loadVendors();
   }
 
   loadVendors() {
@@ -30,7 +42,7 @@ export class VendorListComponent implements OnInit {
         this.vendors = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: Error) => {
         console.error('Failed to fetch vendors', err);
         this.loading = false;
       },
@@ -41,7 +53,6 @@ export class VendorListComponent implements OnInit {
     switch (status) {
       case 'Verified': return 'Approved';
       case 'PendingApproval': return 'Pending';
-      
       default: return 'Inactive';
     }
   }
@@ -51,7 +62,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         v.status = 'Verified'; // update UI
       },
-      error: (err) => {
+      error: (err : Error) => {
         console.error(`Failed to approve vendor ${v.id}`, err);
       },
     });
@@ -67,7 +78,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         this.vendors = this.vendors.filter(x => x.id !== v.id);
       },
-      error: (err) => {
+      error: (err: Error) => {
         console.error(`Failed to reject vendor ${v.id}`, err);
       },
     });
@@ -78,7 +89,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         this.vendors = this.vendors.filter(v => v.id !== vendor.id);
       },
-      error: (err) => console.error('Error deleting vendor', err)
+      error: (err: Error) => console.error('Error deleting vendor', err)
     });
   }
 

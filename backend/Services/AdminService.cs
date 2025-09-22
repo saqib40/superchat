@@ -57,6 +57,11 @@ namespace backend.Services
                 // Handle case where 'Vendor' role doesn't exist
                 return false; 
             }
+            // khud sai not tested
+            if (vendor.TokenExpiry > DateTime.UtcNow)
+            {
+                return false;
+            }
             // If the vendor is valid, create a new User account for them using the temporarily stored details.
             var user = new User
             {
