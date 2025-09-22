@@ -1,3 +1,9 @@
+<<<<<<< HEAD
+=======
+
+
+// src/app/services/vendor.service.ts
+>>>>>>> fdd9cdf (some changes)
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
@@ -7,7 +13,11 @@ export interface Vendor {
   id: number;
   companyName: string;
   contactEmail: string;
+<<<<<<< HEAD
   status: 'approved' | 'pending' | 'requesting' | 'inactive';
+=======
+  status: 'Verified' | 'PendingApproval';
+>>>>>>> fdd9cdf (some changes)
 }
 
 @Injectable({ providedIn: 'root' })
