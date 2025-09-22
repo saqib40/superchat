@@ -20,6 +20,16 @@ export class VendorListComponent implements OnInit {
 
   constructor(private vendorService: VendorService, private authService: AuthService) {}
 
+<<<<<<< HEAD
+=======
+  constructor(private vendorService: VendorService) {}
+  /*
+  ngOnInit(): void {
+    
+     this.loadVendors();
+  }
+    */
+>>>>>>> c3cc69d23f7146d78ff6868b404f2df5e1bbb609
   ngOnInit(): void {
     this.userRole = this.authService.getUserRole();
     this.loadVendors();
