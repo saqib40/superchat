@@ -95,7 +95,3 @@ export class VendorListComponent implements OnInit {
     );
   }
 }
-
-
-
-
