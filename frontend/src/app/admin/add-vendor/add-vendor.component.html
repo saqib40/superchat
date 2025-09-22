@@ -1,38 +1,56 @@
-<div class="add-vendor-form">
-  <h2>Add Vendor</h2>
-  <p class="subtitle">Send an invitation to onboard a new vendor</p>
+<div class="add-vendor-container">
+  <div class="card">
+    <h2 class="card-title">Add Vendor</h2>
+    <p class="subtitle">Send an invitation to onboard a new vendor</p>
 
-  <div class="form-group">
-    <label for="email">Vendor Email</label>
-    <input
-      type="email"
-      id="email"
-      [(ngModel)]="vendorEmail"
-      placeholder="Enter vendor email"
-    />
+    <!-- Company Name -->
+    <div class="form-group">
+      <label for="companyName">Company Name</label>
+      <input
+        type="text"
+        id="companyName"
+        [(ngModel)]="companyName"
+        placeholder="Enter company name"
+        class="form-control"
+      />
+    </div>
+
+    <!-- Vendor Email -->
+    <div class="form-group">
+      <label for="email">Vendor Email</label>
+      <input
+        type="email"
+        id="email"
+        [(ngModel)]="vendorEmail"
+        placeholder="Enter vendor email"
+        class="form-control"
+      />
+    </div>
+
+    <!-- Action Button -->
     <button class="primary-btn" (click)="sendInvitation()">
       <span class="material-icons">send</span>
       Send Invitation
     </button>
-  </div>
 
-  <!-- Status -->
-  <div *ngIf="vendorStatus === 'pending'" class="status-box warning">
-    <span class="material-icons">schedule</span>
-    Invitation sent. Waiting for vendor to verify.
-  </div>
+    <!-- Status Messages -->
+    <div *ngIf="vendorStatus === 'pending'" class="status-box warning">
+      <span class="material-icons">schedule</span>
+      Invitation sent. Waiting for vendor to verify.
+    </div>
 
-  <div *ngIf="vendorStatus === 'requesting'" class="status-box info">
-    <span class="material-icons">hourglass_bottom</span>
-    Vendor submitted details. Awaiting approval.
-    <button (click)="approveVendor()" class="secondary-btn">
-      <span class="material-icons">check_circle</span>
-      Approve Vendor
-    </button>
-  </div>
+    <div *ngIf="vendorStatus === 'requesting'" class="status-box info">
+  <span class="material-icons">hourglass_bottom</span>
+  Vendor submitted details. Awaiting approval.
+  <button routerLink="/admin/vendors" class="secondary-btn">
+    <span class="material-icons">check_circle</span>
+    Go to Vendor List
+  </button>
+</div>
 
-  <div *ngIf="vendorStatus === 'approved'" class="status-box success">
-    <span class="material-icons">verified</span>
-    Vendor approved successfully.
+    <div *ngIf="vendorStatus === 'approved'" class="status-box success">
+      <span class="material-icons">verified</span>
+      Vendor approved successfully.
+    </div>
   </div>
 </div>

@@ -1,3 +1,5 @@
+
+
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,33 +13,33 @@ import { VendorService } from '../../services/vendor.service';
   styleUrls: ['./add-vendor.component.css']
 })
 export class AddVendorComponent {
+  companyName: string = '';
   vendorEmail: string = '';
   vendorStatus: 'idle' | 'pending' | 'requesting' | 'approved' = 'idle';
 
   constructor(private vendorService: VendorService) {}
 
-  sendInvitation() {
+ sendInvitation() {
     if (this.vendorEmail.trim()) {
-      // If backend not ready, VendorService can be stubbed to return an observable.
-      this.vendorService.sendInvitation(this.vendorEmail).subscribe(() => {
-        this.vendorStatus = 'pending';
-        this.vendorEmail = '';
-      }, () => {
-        // handle error (optional)
+      this.vendorService.sendInvitation(this.companyName, this.vendorEmail).subscribe({
+        next: () => {
+          this.vendorStatus = 'pending';
+          this.vendorEmail = '';
+        },
+        error: (err) => {
+          console.error('Failed to send invitation', err);
+          alert('Something went wrong while sending invitation.');
+        }
       });
     } else {
       alert('Please enter a valid email address.');
     }
   }
 
+  // Simulate vendor submitting details (mock UI)
   simulateVendorDetailsSubmitted() {
     this.vendorStatus = 'requesting';
-  }
-
-  approveVendor() {
-    this.vendorService.approveVendor(this.vendorEmail).subscribe(() => {
-      this.vendorStatus = 'approved';
-    });
-  }
+  }  
 }
+
 

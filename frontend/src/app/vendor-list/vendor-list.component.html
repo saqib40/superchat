@@ -1,56 +1,3 @@
-<!--<div class="welcome-card vendor-list-root">
-  <div class="header-row">
-    <h2>Vendor List</h2>
-    <p class="subtitle">All vendors currently in the system</p>
-
-
-  <div class="controls">
-    <input type="search" placeholder="Search vendors (name or email)" disabled />
-   
-  </div>
-
-
-  <div *ngIf="vendors.length === 0" class="empty-state">
-    <p>No vendors yet — backend integration pending.</p>
-  </div>
-
-
-  <div *ngIf="vendors.length > 0" class="table-wrap">
-    <table class="vendor-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let v of vendors">
-          <td>{{ v.name }}</td>
-          <td>{{ v.email }}</td>
-          <td>
-            <span
-              class="status-chip"
-              [ngClass]="{
-                'status-approved': v.status === 'approved',
-                'status-pending': v.status === 'pending',
-                'status-requesting': v.status === 'requesting'
-              }"
-            >
-              {{ statusLabel(v.status) }}
-            </span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="footnote">
-    <small>Data placeholder — will fetch from API once backend is available.</small>
-  </div>
-</div>
--->
-
 <div class="welcome-card vendor-list-root">
   <div class="header-row">
     <h2>Vendor List</h2>
@@ -79,12 +26,13 @@
           <th>Name</th>
           <th>Email</th>
           <th>Status</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let v of filteredVendors">
-          <td>{{ v.name }}</td>
-          <td>{{ v.email }}</td>
+          <td>{{ v.companyName }}</td>
+          <td>{{ v.contactEmail }}</td>
           <td>
             <span
               class="status-chip"
@@ -97,13 +45,32 @@
               {{ statusLabel(v.status) }}
             </span>
           </td>
+          <td>
+            <!-- Pending vendors: Approve + Reject -->
+            <ng-container *ngIf="v.status === 'pending'">
+              <button class="primary-btn" (click)="approveVendor(v)">Approve</button>
+              <button class="danger-btn" (click)="rejectVendor(v)">Reject</button>
+            </ng-container>
+
+            <!-- Approved vendors: Delete only -->
+            <ng-container *ngIf="v.status === 'approved'">
+               <button class="profile-btn" [routerLink]="['/vendors', v.id]">
+      <span class="icon">👤</span> View Profile
+    </button>
+              <button class="danger-btn" (click)="deleteVendor(v)">Delete</button>
+            </ng-container>
+
+            <!-- Requesting vendors: no actions -->
+            <ng-container *ngIf="v.status === 'requesting'">
+              ⏳ Awaiting Submission
+            </ng-container>
+          </td>
         </tr>
       </tbody>
     </table>
   </div>
-
+<!--
   <div class="footnote">
     <small>Data placeholder — will fetch from API once backend is available.</small>
-  </div>
+  </div>-->
 </div>
-
