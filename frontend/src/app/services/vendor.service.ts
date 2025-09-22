@@ -10,7 +10,7 @@ export interface Vendor {
   id: number;
   companyName: string;
   contactEmail: string;
-  status: 'approved' | 'pending' | 'requesting' | 'inactive';
+  status: 'Verified' | 'PendingApproval';
 }
 
 @Injectable({ providedIn: 'root' })
