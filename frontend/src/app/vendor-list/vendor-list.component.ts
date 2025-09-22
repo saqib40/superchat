@@ -19,12 +19,8 @@ export class VendorListComponent implements OnInit {
   constructor(private vendorService: VendorService) {}
 
   ngOnInit(): void {
-    // 🔹 Dummy data for testing UI
-    this.vendors = [
-      
-      { id: 3, companyName: 'Tech World', contactEmail: 'contact@techworld.com', status: 'approved' },
-     
-    ];
+    
+     this.loadVendors();
   }
 
   loadVendors() {
@@ -43,9 +39,9 @@ export class VendorListComponent implements OnInit {
 
   statusLabel(status: Vendor['status']) {
     switch (status) {
-      case 'approved': return 'Approved';
-      case 'pending': return 'Pending';
-      case 'requesting': return 'Requesting';
+      case 'Verified': return 'Approved';
+      case 'PendingApproval': return 'Pending';
+      
       default: return 'Inactive';
     }
   }
@@ -53,7 +49,7 @@ export class VendorListComponent implements OnInit {
   approveVendor(v: Vendor) {
     this.vendorService.approveVendor(v.id).subscribe({
       next: () => {
-        v.status = 'approved'; // update UI
+        v.status = 'Verified'; // update UI
       },
       error: (err) => {
         console.error(`Failed to approve vendor ${v.id}`, err);

@@ -37,9 +37,8 @@
             <span
               class="status-chip"
               [ngClass]="{
-                'status-approved': v.status === 'approved',
-                'status-pending': v.status === 'pending',
-                'status-requesting': v.status === 'requesting'
+                'status-approved': v.status === 'Verified',
+                'status-pending': v.status === 'PendingApproval',
               }"
             >
               {{ statusLabel(v.status) }}
@@ -47,13 +46,13 @@
           </td>
           <td>
             <!-- Pending vendors: Approve + Reject -->
-            <ng-container *ngIf="v.status === 'pending'">
+            <ng-container *ngIf="v.status === 'PendingApproval'">
               <button class="primary-btn" (click)="approveVendor(v)">Approve</button>
               <button class="danger-btn" (click)="rejectVendor(v)">Reject</button>
             </ng-container>
 
             <!-- Approved vendors: Delete only -->
-            <ng-container *ngIf="v.status === 'approved'">
+            <ng-container *ngIf="v.status === 'Verified'">
                <button class="profile-btn" [routerLink]="['/vendors', v.id]">
       <span class="icon">👤</span> View Profile
     </button>
@@ -61,9 +60,7 @@
             </ng-container>
 
             <!-- Requesting vendors: no actions -->
-            <ng-container *ngIf="v.status === 'requesting'">
-              ⏳ Awaiting Submission
-            </ng-container>
+         
           </td>
         </tr>
       </tbody>
