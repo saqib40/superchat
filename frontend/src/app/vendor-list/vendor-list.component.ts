@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { VendorService, Vendor } from '../services/vendor.service';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Component({
   selector: 'app-vendor-list',
@@ -15,19 +16,12 @@ export class VendorListComponent implements OnInit {
   searchTerm: string = '';
   vendors: Vendor[] = [];
   loading = false;
+  userRole: 'Admin' | 'Leadership' | 'Vendor' | null = null;
 
-  constructor(private vendorService: VendorService) {}
-  /*
+  constructor(private vendorService: VendorService, private authService: AuthService) {}
+
   ngOnInit(): void {
-    // 🔹 Dummy data for testing UI
-    this.vendors = [
-      
-      { id: 3, companyName: 'Tech World', contactEmail: 'contact@techworld.com', status: 'approved' },
-     
-    ];
-  }
-    */
-  ngOnInit(): void {
+    this.userRole = this.authService.getUserRole();
     this.loadVendors();
   }
 
