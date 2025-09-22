@@ -19,12 +19,8 @@ export class VendorListComponent implements OnInit {
   constructor(private vendorService: VendorService) {}
   /*
   ngOnInit(): void {
-    // 🔹 Dummy data for testing UI
-    this.vendors = [
-      
-      { id: 3, companyName: 'Tech World', contactEmail: 'contact@techworld.com', status: 'approved' },
-     
-    ];
+    
+     this.loadVendors();
   }
     */
   ngOnInit(): void {
