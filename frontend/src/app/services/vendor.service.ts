@@ -20,12 +20,13 @@ export class VendorService {
   constructor(private http: HttpClient) {}
 
   private getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    return new HttpHeaders({
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json'
-    });
-  }
+  const token = localStorage.getItem('token'); // ✅ only one argument
+  return new HttpHeaders({
+    'Authorization': token ? `Bearer ${token}` : '',
+    'Content-Type': 'application/json'
+  });
+}
+
 
   getVendors(): Observable<Vendor[]> {
   return this.http.get<Vendor[]>(this.apiUrl, {
