@@ -34,7 +34,7 @@ export class VendorListComponent implements OnInit {
         this.vendors = data;
         this.loading = false;
       },
-      error: (err) => {
+      error: (err: Error) => {
         console.error('Failed to fetch vendors', err);
         this.loading = false;
       },
@@ -55,7 +55,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         v.status = 'approved'; // update UI
       },
-      error: (err) => {
+      error: (err : Error) => {
         console.error(`Failed to approve vendor ${v.id}`, err);
       },
     });
@@ -71,7 +71,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         this.vendors = this.vendors.filter(x => x.id !== v.id);
       },
-      error: (err) => {
+      error: (err: Error) => {
         console.error(`Failed to reject vendor ${v.id}`, err);
       },
     });
@@ -82,7 +82,7 @@ export class VendorListComponent implements OnInit {
       next: () => {
         this.vendors = this.vendors.filter(v => v.id !== vendor.id);
       },
-      error: (err) => console.error('Error deleting vendor', err)
+      error: (err: Error) => console.error('Error deleting vendor', err)
     });
   }
 
