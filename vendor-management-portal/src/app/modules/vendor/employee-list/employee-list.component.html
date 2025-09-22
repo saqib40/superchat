@@ -1,0 +1,268 @@
+<div class="employee-list-page">
+  <!-- Header Section -->
+  <div class="page-header mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-gray-900">My Employees</h2>
+      <a routerLink="/vendor/employees/add" class="btn-primary">
+        + Add New Employee
+      </a>
+    </div>
+
+    <!-- Search -->
+    <div class="search-section card mb-4">
+      <div class="max-w-md">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Search Employees</label>
+        <input
+          type="text"
+          placeholder="Search by name or job title..."
+          class="input-field"
+          (input)="onSearchChange($event)"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading employees...</p>
+  </div>
+
+  <!-- Employees Grid -->
+  <div *ngIf="!isLoading" class="employees-container">
+    <div *ngIf="filteredEmployees.length > 0" class="employees-grid">
+      <div *ngFor="let employee of filteredEmployees" class="employee-card">
+        <div class="card-header">
+          <div class="employee-avatar">
+            {{ employee.firstName.charAt(0) }}{{ employee.lastName.charAt(0) }}
+          </div>
+          <div class="employee-info">
+            <h3 class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</h3>
+            <p class="employee-title">{{ employee.jobTitle || 'No job title' }}</p>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <div class="employee-details">
+            <div class="detail-item">
+              <span class="detail-label">Added:</span>
+              <span class="detail-value">{{ employee.createdAt | date:'short' }}</span>
+            </div>
+            <div class="detail-item" *ngIf="employee.resumeUrl">
+              <span class="detail-label">Resume:</span>
+              <a [href]="employee.resumeUrl" target="_blank" class="resume-link">
+                View Resume
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-actions">
+          <a [routerLink]="['/vendor/employees', employee.id, 'edit']" class="action-btn edit-btn">
+            Edit
+          </a>
+          <button (click)="deleteEmployee(employee)" class="action-btn delete-btn">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="filteredEmployees.length === 0" class="empty-state">
+      <div class="empty-icon">👥</div>
+      <h3 class="empty-title">No employees found</h3>
+      <p class="empty-message">
+        {{ searchTerm ? 'No employees match your search criteria.' : 'You haven\'t added any employees yet.' }}
+      </p>
+      <a *ngIf="!searchTerm" routerLink="/vendor/employees/add" class="btn-primary mt-4">
+        Add Your First Employee
+      </a>
+    </div>
+  </div>
+</div>
+
+<style>
+.employee-list-page {
+  padding: 1rem;
+}
+
+.loading-container {
+  text-align: center;
+  padding: 3rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #6b7280;
+}
+
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.employee-card {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.employee-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.employee-avatar {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.employee-info {
+  flex: 1;
+}
+
+.employee-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.employee-title {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.card-body {
+  padding: 1rem 1.5rem;
+}
+
+.employee-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.resume-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.resume-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.card-actions {
+  padding: 1rem 1.5rem;
+  background: #f9fafb;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.edit-btn {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.edit-btn:hover {
+  background: #e5e7eb;
+}
+
+.delete-btn {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.delete-btn:hover {
+  background: #fecaca;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-message {
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+</style>

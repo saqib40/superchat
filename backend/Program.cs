@@ -14,6 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
+// --- CORS policy name ---
+var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
 var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
 var dbName = Environment.GetEnvironmentVariable("DB_NAME");
@@ -70,6 +73,19 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          // Allow requests from the default Angular development server origin.
+                          // For production, you would replace this with your actual frontend domain.
+                          policy.WithOrigins("http://localhost:4200")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -120,6 +136,8 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(MyAllowSpecificOrigins);
 
 // Add Authentication and Authorization middleware
 app.UseAuthentication();

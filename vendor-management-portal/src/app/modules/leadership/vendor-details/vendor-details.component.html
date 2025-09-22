@@ -1,0 +1,342 @@
+<div class="vendor-details-page">
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Loading vendor details...</p>
+  </div>
+
+  <!-- Vendor Details -->
+  <div *ngIf="!isLoading && vendor" class="vendor-content">
+    <!-- Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <a routerLink="/leadership/search" class="back-link">← Back to Search</a>
+        <h2 class="vendor-name">{{ vendor.companyName }}</h2>
+        <span class="vendor-status" [class]="getStatusClass(vendor.status)">
+          {{ vendor.status }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Vendor Information -->
+    <div class="info-section card">
+      <h3 class="section-title">Company Information</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <label class="info-label">Company Name</label>
+          <span class="info-value">{{ vendor.companyName }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Contact Email</label>
+          <span class="info-value">{{ vendor.contactEmail }}</span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Status</label>
+          <span class="vendor-status" [class]="getStatusClass(vendor.status)">
+            {{ vendor.status }}
+          </span>
+        </div>
+        <div class="info-item">
+          <label class="info-label">Registration Date</label>
+          <span class="info-value">{{ vendor.createdAt | date:'medium' }}</span>
+        </div>
+        <div class="info-item" *ngIf="vendor.firstName && vendor.lastName">
+          <label class="info-label">Primary Contact</label>
+          <span class="info-value">{{ vendor.firstName }} {{ vendor.lastName }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Employees Section -->
+    <div class="employees-section card">
+      <div *ngIf="vendor.employees && vendor.employees.length > 0" class="employees-grid">
+        <div *ngFor="let employee of vendor.employees" class="employee-card">
+          <div class="employee-avatar">
+            {{ employee.firstName.charAt(0) }}{{ employee.lastName.charAt(0) }}
+          </div>
+          <div class="employee-info">
+            <h4 class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</h4>
+            <p class="employee-title">{{ employee.jobTitle || 'No job title specified' }}</p>
+            <div class="employee-meta">
+              <span class="employee-date">Added: {{ employee.createdAt | date:'short' }}</span>
+              <a *ngIf="employee.resumeUrl"
+                 [href]="employee.resumeUrl"
+                 target="_blank"
+                 class="resume-link">
+                View Resume
+              </a>
+            </div>
+          </div>
+        </div>
+        </div>
+  </div>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="!isLoading && !vendor" class="error-state">
+    <div class="error-icon">❌</div>
+    <h3 class="error-title">Vendor Not Found</h3>
+    <p class="error-text">The requested vendor could not be found.</p>
+    <a routerLink="/leadership/search" class="back-link">Return to Search</a>
+  </div>
+</div>
+
+<style>
+.vendor-details-page {
+  padding: 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.loading-container, .error-state {
+  text-align: center;
+  padding: 3rem;
+}
+
+.loading-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid #e5e7eb;
+  border-top: 2px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+  color: #6b7280;
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.back-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.back-link:hover {
+  color: #1d4ed8;
+}
+
+.vendor-name {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #111827;
+  margin: 0;
+}
+
+.vendor-status {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-default {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.card {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.employee-count {
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.info-value {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.employee-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.employee-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  border-radius: 0.5rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.employee-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.employee-avatar {
+  width: 3rem;
+  height: 3rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.employee-info {
+  flex: 1;
+}
+
+.employee-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.employee-title {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.employee-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.employee-date {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.resume-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.75rem;
+}
+
+.resume-link:hover {
+  color: #1d4ed8;
+  text-decoration: underline;
+}
+
+.no-employees {
+  text-align: center;
+  padding: 2rem;
+}
+
+.no-employees-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.no-employees-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.no-employees-text {
+  color: #6b7280;
+  margin: 0;
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.error-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.error-text {
+  color: #6b7280;
+  margin: 0 0 1rem 0;
+}
+</style>
