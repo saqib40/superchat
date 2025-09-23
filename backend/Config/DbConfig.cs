@@ -22,6 +22,31 @@ namespace backend.Config
                 new Role { Id = 3, Name = "Vendor" }
             );
 
+            // --- Configure the new JobVendor many-to-many relationship ---
+            modelBuilder.Entity<JobVendor>()
+                // specific job can only be assigned to a specific vendor once
+                // must be unique for every row, preventing duplicate assignments
+                .HasKey(jv => new { jv.JobId, jv.VendorId }); // Composite primary key
+            // JobVendor -> Job
+            modelBuilder.Entity<JobVendor>()
+                .HasOne(jv => jv.Job)
+                .WithMany(j => j.VendorAssignments)
+                .HasForeignKey(jv => jv.JobId);
+            // JobVendor -> Vendor
+            modelBuilder.Entity<JobVendor>()
+                .HasOne(jv => jv.Vendor)
+                .WithMany(v => v.JobAssignments)
+                .HasForeignKey(jv => jv.VendorId);
+
+
+            // --- Configure the new one-to-many relationship between Job and Employee ---
+            modelBuilder.Entity<Job>()
+                .HasMany(j => j.Employees)
+                .WithOne(e => e.Job)
+                .HasForeignKey(e => e.JobId)
+                .OnDelete(DeleteBehavior.Restrict); // Prevent deleting a job if it has employees
+
+
             // Configure the many-to-many relationship between User and Role
             // This automatically creates the 'UserRoles' join table
             modelBuilder.Entity<User>()
