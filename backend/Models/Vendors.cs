@@ -7,6 +7,7 @@ namespace backend.Models
     {
         [Key]
         public int Id { get; set; }
+        public Guid PublicId { get; set; } = Guid.NewGuid();
 
         [Required]
         [MaxLength(255)]
@@ -17,36 +18,32 @@ namespace backend.Models
         public string ContactEmail { get; set; } = string.Empty;
 
         [Required]
+        [MaxLength(100)]
+        public string Country { get; set; } = string.Empty;
+
+        [Required]
         [MaxLength(50)]
         public string Status { get; set; } = string.Empty;
 
         public Guid? VerificationToken { get; set; }
         public DateTime? TokenExpiry { get; set; }
-    
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
-        // These fields temporarily store the vendor's submitted details while awaiting approval.
-        [MaxLength(100)]
-        public string? PendingFirstName { get; set; }
-
-        [MaxLength(100)]
-        public string? PendingLastName { get; set; }
-        
-        public string? PendingPasswordHash { get; set; }
-
         // Foreign Keys
         public int? UserId { get; set; } // The vendor's own user account
-        public int AddedByAdminId { get; set; } // The admin who added the vendor
-        public int? UpdatedByAdminId { get; set; }
-    
+        public int AddedByLeaderId { get; set; }
+        public int? UpdatedByLeaderId { get; set; }
+
         // Navigation Properties
         [ForeignKey("UserId")]
         public virtual User? User { get; set; }
 
-        [ForeignKey("AddedByAdminId")]
-        public virtual User AddedByAdmin { get; set; }
+        [ForeignKey("AddedByLeaderId")]
+        public virtual User AddedByLeader { get; set; } = null!;
 
         public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        public virtual ICollection<JobVendor> JobAssignments { get; set; } = new List<JobVendor>();
     }
 }
