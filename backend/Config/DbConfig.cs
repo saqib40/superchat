@@ -60,7 +60,7 @@ namespace backend.Config
                 .WithOne(e => e.Vendor)
                 .HasForeignKey(e => e.VendorId)
                 .OnDelete(DeleteBehavior.Cascade); // Optional: delete employees if vendor is deleted
-                
+
             // to break cascade cycle
             modelBuilder.Entity<Employee>()
                 .HasOne(e => e.CreatedByUser)
@@ -73,6 +73,12 @@ namespace backend.Config
                 .HasOne(v => v.User)
                 .WithOne()
                 .HasForeignKey<Vendor>(v => v.UserId);
+            
+            // To ensure fast lookups and prevent duplicate GUIDs, adding a unique index to the new PublicId columns.
+            modelBuilder.Entity<User>().HasIndex(u => u.PublicId).IsUnique();
+            modelBuilder.Entity<Vendor>().HasIndex(v => v.PublicId).IsUnique();
+            modelBuilder.Entity<Job>().HasIndex(j => j.PublicId).IsUnique();
+            modelBuilder.Entity<Employee>().HasIndex(e => e.PublicId).IsUnique();
         }
     }
 }

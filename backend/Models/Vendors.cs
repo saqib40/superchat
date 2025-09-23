@@ -7,6 +7,7 @@ namespace backend.Models
     {
         [Key]
         public int Id { get; set; }
+        public Guid PublicId { get; set; } = Guid.NewGuid();
 
         [Required]
         [MaxLength(255)]
