@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using backend.Helpers;
 
 namespace backend.Services
 {
@@ -22,8 +23,7 @@ namespace backend.Services
             var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
 
             // Check if the user exists AND if the provided password matches the hashed password in the database.
-            // BCrypt.Verify handles the complex comparison of the plain-text password and the hash.
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
             {
                 return null; // Return null if authentication fails.
             }
