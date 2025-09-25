@@ -15,28 +15,28 @@ namespace backend.Services
             _emailService = emailService;
         }
 
-        // Handles the creation of a new vendor with the new 'Country' field.
-        public async Task<VendorDto?> CreateVendorAsync(string companyName, string contactEmail, string country, int addedByLeaderId)
-        {
-            var vendor = new Vendor
-            {
-                CompanyName = companyName,
-                ContactEmail = contactEmail,
-                Country = country, // Added the new 'Country' property
-                Status = "PendingInvitation",
-                VerificationToken = Guid.NewGuid(),
-                TokenExpiry = DateTime.UtcNow.AddDays(7),
-                AddedByLeaderId = addedByLeaderId, // Updated from AdminId to AddedByLeaderId
-                CreatedAt = DateTime.UtcNow
-            };
+        // // Handles the creation of a new vendor with the new 'Country' field.
+        // public async Task<VendorDto?> CreateVendorAsync(string companyName, string contactEmail, string country, int addedByLeaderId)
+        // {
+        //     var vendor = new Vendor
+        //     {
+        //         CompanyName = companyName,
+        //         ContactEmail = contactEmail,
+        //         Country = country, // Added the new 'Country' property
+        //         Status = "PendingInvitation",
+        //         VerificationToken = Guid.NewGuid(),
+        //         TokenExpiry = DateTime.UtcNow.AddDays(7),
+        //         AddedByLeaderId = addedByLeaderId, // Updated from AdminId to AddedByLeaderId
+        //         CreatedAt = DateTime.UtcNow
+        //     };
 
-            _context.Vendors.Add(vendor);
-            await _context.SaveChangesAsync();
+        //     _context.Vendors.Add(vendor);
+        //     await _context.SaveChangesAsync();
 
-            await _emailService.SendInvitationEmailAsync(vendor.ContactEmail, vendor.VerificationToken.Value);
+        //     await _emailService.SendInvitationEmailAsync(vendor.ContactEmail, vendor.VerificationToken.Value);
 
-            return new VendorDto(vendor.Id, vendor.CompanyName, vendor.ContactEmail, vendor.Country, vendor.Status, vendor.CreatedAt, vendor.AddedByLeaderId);
-        }
+        //     return new VendorDto(vendor.Id, vendor.CompanyName, vendor.ContactEmail, vendor.Country, vendor.Status, vendor.CreatedAt, vendor.AddedByLeaderId);
+        // }
 
         // Approves a vendor who has submitted their details.
         public async Task<bool> ApproveVendorAsync(int vendorId)
@@ -95,20 +95,20 @@ namespace backend.Services
                 .ToListAsync();
         }
 
-        // Retrieves a single vendor by their ID.
-        public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
-        {
-            return await _context.Vendors
-                .Where(v => v.Id == vendorId)
-                .Select(v => new VendorDetailDto(
-                    v.Id,
-                    v.CompanyName,
-                    v.ContactEmail,
-                    v.Status,
-                    v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId)).ToList()
-                ))
-                .FirstOrDefaultAsync();
-        }
+        // // Retrieves a single vendor by their ID.
+        // public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
+        // {
+        //     return await _context.Vendors
+        //         .Where(v => v.Id == vendorId)
+        //         .Select(v => new VendorDetailDto(
+        //             v.Id,
+        //             v.CompanyName,
+        //             v.ContactEmail,
+        //             v.Status,
+        //             v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId)).ToList()
+        //         ))
+        //         .FirstOrDefaultAsync();
+        // }
 
         // Deletes a vendor from the database.
         public async Task<bool> DeleteVendorAsync(int vendorId)

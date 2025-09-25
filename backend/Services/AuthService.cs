@@ -57,7 +57,11 @@ namespace backend.Services
                 .FirstOrDefaultAsync(v =>
                     v.VerificationToken == token &&
                     v.TokenExpiry > DateTime.UtcNow);
-
+            // add the logic pleaseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
+            // also change the api/leadership/vendors ; expcet leader to add password as well
+            // and then send that password to vendor via email cause he is supposed to know as wwll
+            // which is a stupid thing to do 
+            // but we gotta do it
             return vendor;
         }
 

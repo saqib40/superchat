@@ -92,5 +92,25 @@ namespace backend.Controllers
             }
             return Ok(vendors);
         }
+
+        [HttpPost("vendors")]
+        public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest request)
+        {
+            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(adminIdString) || !int.TryParse(adminIdString, out var adminId))
+            {
+                return Unauthorized("Invalid user token.");
+            }
+            // Updated to pass the 'Country' field to the service.
+            var vendor = await _leadershipService.CreateVendorAsync(request.CompanyName, request.ContactEmail, request.Country, adminId);
+            return CreatedAtAction(nameof(GetVendorById), new { id = vendor.Id }, vendor);
+        }
+        [HttpGet("vendors/{id}")]
+        public async Task<IActionResult> GetVendorById(int id)
+        {
+            var vendor = await _leadershipService.GetVendorByIdAsync(id);
+            if (vendor == null) return NotFound();
+            return Ok(vendor);
+        }
     }
 }

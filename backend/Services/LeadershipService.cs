@@ -1,12 +1,10 @@
 // backend/Services/LeadershipService.cs
 
 using Amazon.S3;
-using Amazon.S3.Model;
 using backend.Config;
 using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace backend.Services
 {
@@ -14,6 +12,7 @@ namespace backend.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IAmazonS3 _s3Client;
+        private readonly EmailService _emailService;
 
         public LeadershipService(ApplicationDbContext context, IAmazonS3 s3Client)
         {
@@ -108,5 +107,42 @@ namespace backend.Services
         //     public DateTime ExpiryDate { get; set; }
         //     public List<int> VendorIds { get; set; }
         // }
+        // Handles the creation of a new vendor with the new 'Country' field.
+        public async Task<VendorDto?> CreateVendorAsync(string companyName, string contactEmail, string country, int addedByLeaderId)
+        {
+            var vendor = new Vendor
+            {
+                CompanyName = companyName,
+                ContactEmail = contactEmail,
+                Country = country, // Added the new 'Country' property
+                Status = "PendingInvitation",
+                VerificationToken = Guid.NewGuid(),
+                TokenExpiry = DateTime.UtcNow.AddDays(7),
+                AddedByLeaderId = addedByLeaderId, // Updated from AdminId to AddedByLeaderId
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Vendors.Add(vendor);
+            await _context.SaveChangesAsync();
+
+            await _emailService.SendInvitationEmailAsync(vendor.ContactEmail, vendor.VerificationToken.Value);
+
+            return new VendorDto(vendor.Id, vendor.CompanyName, vendor.ContactEmail, vendor.Country, vendor.Status, vendor.CreatedAt, vendor.AddedByLeaderId);
+        }
+         // Retrieves a single vendor by their ID.
+        public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
+        {
+            return await _context.Vendors
+                .Where(v => v.Id == vendorId)
+                .Select(v => new VendorDetailDto(
+                    v.Id,
+                    v.CompanyName,
+                    v.ContactEmail,
+                    v.Status,
+                    v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId)).ToList()
+                ))
+                .FirstOrDefaultAsync();
+        }
+
     }
 }
