@@ -12,74 +12,80 @@ namespace backend.Services
     public class AuthService
     {
         private readonly ApplicationDbContext _context;
-        public AuthService(ApplicationDbContext context)
+        private readonly IConfiguration _configuration;
+
+        public AuthService(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
+
+        // --- CORE AUTHENTICATION AND LOGIN ---
+
+        // Helper method to retrieve user and roles for JWT generation
+        public async Task<User?> GetUserByEmailAsync(string email)
+        {
+            return await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Email == email);
+        }
+
+        // 1. LOGIN: Finds user, verifies password, and generates JWT. (REQUIRED)
         public async Task<string?> LoginAsync(string email, string password)
         {
-            // Find the user by their email. We use 'Include' to also load their associated Roles,
-            // which we'll need later for creating claims in the JWT.
-            var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
+            Console.WriteLine("hlo1");
+            var user = await GetUserByEmailAsync(email);
+            Console.WriteLine("hlo2");
 
-            // Check if the user exists AND if the provided password matches the hashed password in the database.
+            // Check if user exists AND if the password is valid
             if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
             {
-                return null; // Return null if authentication fails.
+                return null; // Authentication failed
             }
 
-            // If credentials are valid, generate and return a JWT.
+            user.LastLoginDate = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
             return GenerateJwtToken(user);
         }
-        // Called when the vendor submits their details.
-        public async Task<bool> SubmitVendorDetailsAsync(Guid token, string firstName, string lastName, string password)
+
+        // 2. TOKEN VERIFICATION: ONLY verifies the token's validity against the Vendor record. (REQUIRED)
+        public async Task<Vendor?> VerifyVendorTokenAsync(Guid token)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.VerificationToken == token);
+            // Finds a vendor record where the token is present AND the expiry date is in the future.
+            var vendor = await _context.Vendors
+                .FirstOrDefaultAsync(v =>
+                    v.VerificationToken == token &&
+                    v.TokenExpiry > DateTime.UtcNow);
 
-            if (vendor == null || vendor.TokenExpiry < DateTime.UtcNow)
-            {
-                return false; // Invalid or expired token
-            }
-
-            // Store the submitted details temporarily on the vendor record.
-            vendor.PendingFirstName = firstName;
-            vendor.PendingLastName = lastName;
-            vendor.PendingPasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
-        
-            // Update the status to await admin approval.
-            vendor.Status = "PendingApproval";
-            vendor.VerificationToken = null; // Invalidate the token
-            vendor.TokenExpiry = null;
-
-            await _context.SaveChangesAsync();
-            return true;
+            return vendor;
         }
+
+        // --- HELPER METHODS FOR SECURITY/TOKEN GENERATION ---
+
+        // Helper method to generate the JWT token
         private string GenerateJwtToken(User user)
         {
-            // Read JWT settings (secret, issuer, audience) directly from environment variables for security.
-            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            var secretKey = _configuration["JWT_SECRET"];
+            var issuer = _configuration["JWT_ISSUER"];
+            var audience = _configuration["JWT_AUDIENCE"];
 
-            // The signing key is what proves the token came from our server.
+            if (string.IsNullOrEmpty(secretKey)) throw new Exception("JWT_SECRET is not configured.");
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            // Claims are pieces of information (the "payload") about the user stored inside the token.
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()), // Standard claim for User ID
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),       // Standard claim for Email
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()) // Unique token ID
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
             };
 
-            // Add all of the user's roles as claims. This is how our authorization will work.
             foreach (var role in user.Roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role.Name));
             }
 
-            // Create the token object with all its properties.
             var token = new JwtSecurityToken(
                 issuer: issuer,
                 audience: audience,
@@ -88,7 +94,6 @@ namespace backend.Services
                 signingCredentials: creds
             );
 
-            // Serialize the token object into a string, which is the final JWT.
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }

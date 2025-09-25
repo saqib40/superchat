@@ -10,9 +10,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 
-var builder = WebApplication.CreateBuilder(args);
-
 Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
 
 // --- CORS policy name ---
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";

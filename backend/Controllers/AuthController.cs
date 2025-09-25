@@ -1,55 +1,71 @@
-// four main routes
-// 1- /login
-// 2- /forgot-password (make it later since i haven't structured anything in the db, maybe add a column in Users table "OTP?")
-// 3- /submit-vendor-details/{token}
-// 4- /approval-by-admin
-
 using backend.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using backend.DTOs;
+using Microsoft.AspNetCore.Authorization;
+
 
 namespace backend.Controllers
 {
-    // Records for our request bodies.
-    //public record LoginRequest(string Email, string Password);
-    //public record VendorSubmissionRequest(string FirstName, string LastName, string Password);
-
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
         private readonly AuthService _authService;
+
         public AuthController(AuthService authService)
         {
             _authService = authService;
         }
+
+        // 1. Route: /login 
         [HttpPost("login")]
+        // Note: We remove the Type = typeof(AuthResponse) since it's not defined
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var token = await _authService.LoginAsync(request.Email, request.Password);
+
             if (token == null)
             {
-                return Unauthorized(new { message = "Invalid credentials." });
+                return Unauthorized(new { message = "Invalid email or password." });
             }
-            return Ok(new { token });
-        }
-        [HttpPost("submit-vendor-details/{token}")]
-        public async Task<IActionResult> SubmitVendorDetails(Guid token, [FromBody] VendorSubmissionRequest request)
-        {
-            var success = await _authService.SubmitVendorDetailsAsync(
-                token,
-                request.FirstName,
-                request.LastName,
-                request.Password
-            );
 
-            if (!success)
+            var user = await _authService.GetUserByEmailAsync(request.Email);
+
+            // FIX: Return an anonymous object to avoid the AuthResponse DTO compilation error
+            return Ok(new
             {
-                return BadRequest(new { message = "Invalid or expired token." });
+                Token = token,
+                Email = user!.Email,
+                Role = user.Roles.FirstOrDefault()?.Name ?? "Unknown"
+            });
+        }
+
+        // 2. Route: /vendor/{token} (Token Verification - NOW A GET REQUEST)
+        // REQUIREMENT: Must be a GET request and ONLY verify the token.
+        [HttpGet("vendor/{token:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> VerifyVendorTokenOnly([FromRoute] Guid token)
+        {
+            // 1. Verify the token against the database
+            var vendor = await _authService.VerifyVendorTokenAsync(token);
+
+            if (vendor == null)
+            {
+                // Return 404/NotFound if the token is invalid or expired.
+                return NotFound(new { message = "Invalid or expired verification link." });
             }
 
-            return Ok(new { message = "Your details have been submitted for admin approval." });
+            // 2. The token is valid. Return 200 OK.
+            // The frontend will read this 200 OK status and redirect the user 
+            // to the final registration form (Name/Password submission).
+            return Ok(new
+            {
+                message = "Token verified. You may proceed to registration.",
+                contactEmail = vendor.ContactEmail
+            });
         }
     }
 }
