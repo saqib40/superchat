@@ -29,6 +29,16 @@ namespace backend.Services
             bool isAssigned = await _context.JobVendors.AnyAsync(jv => jv.JobId == job.Id && jv.VendorId == vendor.Id);
             if (!isAssigned) return null;
 
+            // Optional: Validate that the job exists and is assigned to this vendor.
+            var jobAssignment = await _context.JobVendors
+                .FirstOrDefaultAsync(jv => jv.JobId == dto.JobId && jv.VendorId == vendor.Id);
+
+            if (jobAssignment == null)
+            {
+                // This vendor is not assigned to this job.
+                return null;
+            }
+
             string? resumeS3Key = null;
             if (dto.ResumeFile != null)
             {
@@ -93,6 +103,19 @@ namespace backend.Services
             return await _context.Employees
                 .Where(e => e.Job.PublicId == jobPublicId && e.VendorId == vendor.Id)
                 .Select(e => new EmployeeDto(e.PublicId, e.FirstName, e.LastName, e.JobTitle))
+                .ToListAsync();
+        }
+
+        // New method to get all jobs assigned to the current vendor.
+        public async Task<IEnumerable<JobDto>> GetAssignedJobsAsync(int vendorUserId)
+        {
+            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUserId);
+            if (vendor == null) return new List<JobDto>();
+
+            // Eager load the JobAssignments and then the related Job for the current vendor.
+            return await _context.JobVendors
+                .Where(jv => jv.VendorId == vendor.Id)
+                .Select(jv => new JobDto(jv.Job.Id, jv.Job.Title, jv.Job.Country, jv.Job.CreatedAt, jv.Job.ExpiryDate, jv.Job.IsActive))
                 .ToListAsync();
         }
     }

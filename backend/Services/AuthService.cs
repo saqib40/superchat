@@ -46,8 +46,8 @@ namespace backend.Services
             vendor.Status = "Verified";
             vendor.VerificationToken = null;
             vendor.TokenExpiry = null;
-
             await _context.SaveChangesAsync();
+
             return true;
         }
 
