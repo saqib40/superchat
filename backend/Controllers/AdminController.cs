@@ -1,8 +1,8 @@
+using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using backend.DTOs;
 
 namespace backend.Controllers
 {
@@ -12,104 +12,32 @@ namespace backend.Controllers
     public class AdminController : ControllerBase
     {
         private readonly AdminService _adminService;
-        public AdminController(AdminService adminService)
+        public AdminController(AdminService adminService) => _adminService = adminService;
+
+        private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        [HttpPost("leaders")]
+        public async Task<IActionResult> CreateLeader([FromBody] CreateLeaderRequest dto)
         {
-            _adminService = adminService;
+            var leader = await _adminService.CreateLeaderAsync(dto, GetCurrentUserId());
+            if (leader == null) return BadRequest("Could not create leader.");
+            return Ok(leader);
         }
 
-        // Creating a new vendor with the new 'Country' field.
-        // POST /api/admin/vendors
-        // [HttpPost("vendors")]
-        // public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest request)
-        // {
-        //     var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        //     if (string.IsNullOrEmpty(adminIdString) || !int.TryParse(adminIdString, out var adminId))
-        //     {
-        //         return Unauthorized("Invalid user token.");
-        //     }
-        //     // Updated to pass the 'Country' field to the service.
-        //     var vendor = await _adminService.CreateVendorAsync(request.CompanyName, request.ContactEmail, request.Country, adminId);
-        //     return CreatedAtAction(nameof(GetVendorById), new { id = vendor.Id }, vendor);
-        // }
-
-        // For an admin to approve a vendor.
-        // PUT /api/admin/vendors/{id}/approve
-        // [HttpPut("vendors/{id}/approve")]
-        // public async Task<IActionResult> ApproveVendor(int id)
-        // {
-        //     var success = await _adminService.ApproveVendorAsync(id);
-        //     if (!success) return BadRequest("Vendor approval failed.");
-        //     return Ok(new { message = "Vendor approved successfully." });
-        // }
-
-        // // For an admin to reject a vendor.
-        // // PUT /api/admin/vendors/{id}/reject
-        // [HttpPut("vendors/{id}/reject")]
-        // public async Task<IActionResult> RejectVendor(int id, [FromBody] RejectVendorRequest request)
-        // {
-        //     var success = await _adminService.RejectVendorAsync(id, request.Reason);
-        //     if (!success) return BadRequest("Vendor rejection failed.");
-        //     return Ok(new { message = "Vendor rejected." });
-        // }
-        
-        // To get a list of all vendors.
-        // GET /api/admin/vendors
-        [HttpGet("vendors")]
-        public async Task<IActionResult> GetAllVendors()
+        [HttpDelete("leaders/{publicId:guid}")]
+        public async Task<IActionResult> SoftDeleteLeader(Guid publicId)
         {
-            return Ok(await _adminService.GetAllVendorsAsync());
-        }
-
-        // To get a single vendor by their ID.
-        // GET /api/admin/vendors/{id}
-        // [HttpGet("vendors/{id}")]
-        // public async Task<IActionResult> GetVendorById(int id)
-        // {
-        //     var vendor = await _adminService.GetVendorByIdAsync(id);
-        //     if (vendor == null) return NotFound();
-        //     return Ok(vendor);
-        // }
-
-        // Endpoint to delete a vendor.
-        // DELETE /api/admin/vendors/{id}
-        [HttpDelete("vendors/{id}")]
-        public async Task<IActionResult> DeleteVendor(int id)
-        {
-            var success = await _adminService.DeleteVendorAsync(id);
+            var success = await _adminService.SoftDeleteLeaderAsync(publicId);
             if (!success) return NotFound();
             return NoContent();
         }
-
-        // New endpoint to get all jobs.
-        // GET /api/admin/jobs
-        [HttpGet("jobs")]
-        public async Task<IActionResult> GetAllJobs()
+        
+        [HttpGet("leaders")]
+        public async Task<IActionResult> GetAllLeaders()
         {
-            return Ok(await _adminService.GetAllJobsAsync());
-        }
-
-        // New endpoint to create a job.
-        // POST /api/admin/jobs
-        [HttpPost("jobs")]
-        public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest request)
-        {
-            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(adminIdString) || !int.TryParse(adminIdString, out var adminId))
-            {
-                return Unauthorized("Invalid user token.");
-            }
-            var job = await _adminService.CreateJobAsync(request, adminId);
-            return CreatedAtAction(nameof(GetJobById), new { id = job.Id }, job);
-        }
-
-        // New endpoint to get a job by ID.
-        // GET /api/admin/jobs/{id}
-        [HttpGet("jobs/{id}")]
-        public async Task<IActionResult> GetJobById(int id)
-        {
-            var job = await _adminService.GetJobByIdAsync(id);
-            if (job == null) return NotFound();
-            return Ok(job);
+            var leaders = await _adminService.GetAllLeadersAsync();
+            return Ok(leaders);
         }
     }
 }
+

@@ -1,11 +1,11 @@
 using backend.Config;
+using backend.Helpers;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using backend.Helpers;
 
 namespace backend.Services
 {
@@ -20,60 +20,42 @@ namespace backend.Services
             _configuration = configuration;
         }
 
-        // --- CORE AUTHENTICATION AND LOGIN ---
-
-        // Helper method to retrieve user and roles for JWT generation
-        public async Task<User?> GetUserByEmailAsync(string email)
-        {
-            return await _context.Users
-                .Include(u => u.Roles)
-                .FirstOrDefaultAsync(u => u.Email == email);
-        }
-
-        // 1. LOGIN: Finds user, verifies password, and generates JWT. (REQUIRED)
         public async Task<string?> LoginAsync(string email, string password)
         {
-            Console.WriteLine("hlo1");
-            var user = await GetUserByEmailAsync(email);
-            Console.WriteLine("hlo2");
-
-            // Check if user exists AND if the password is valid
+            var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
             if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
             {
-                return null; // Authentication failed
+                return null;
             }
-
-            user.LastLoginDate = DateTime.UtcNow;
-            await _context.SaveChangesAsync();
-
             return GenerateJwtToken(user);
         }
-
-        // 2. TOKEN VERIFICATION: ONLY verifies the token's validity against the Vendor record. (REQUIRED)
-        public async Task<Vendor?> VerifyVendorTokenAsync(Guid token)
+        
+        // This method is called when the vendor submits their password after clicking the email link.
+        public async Task<bool> SetupVendorAccountAsync(Guid token, string password)
         {
-            // Finds a vendor record where the token is present AND the expiry date is in the future.
-            var vendor = await _context.Vendors
-                .FirstOrDefaultAsync(v =>
-                    v.VerificationToken == token &&
-                    v.TokenExpiry > DateTime.UtcNow);
-            // add the logic pleaseeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee
-            // also change the api/leadership/vendors ; expcet leader to add password as well
-            // and then send that password to vendor via email cause he is supposed to know as wwll
-            // which is a stupid thing to do 
-            // but we gotta do it
-            return vendor;
+            var vendor = await _context.Vendors.Include(v => v.User)
+                .FirstOrDefaultAsync(v => v.VerificationToken == token && v.TokenExpiry > DateTime.UtcNow);
+
+            if (vendor == null || vendor.User == null) return false;
+
+            // Update the vendor's user account with the password they submitted.
+            var user = vendor.User;
+            user.PasswordHash = PasswordHelper.Hash(password);
+
+            // Finalize the vendor status and invalidate the token.
+            vendor.Status = "Verified";
+            vendor.VerificationToken = null;
+            vendor.TokenExpiry = null;
+
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        // --- HELPER METHODS FOR SECURITY/TOKEN GENERATION ---
-
-        // Helper method to generate the JWT token
         private string GenerateJwtToken(User user)
         {
             var secretKey = _configuration["JWT_SECRET"];
             var issuer = _configuration["JWT_ISSUER"];
             var audience = _configuration["JWT_AUDIENCE"];
-
             if (string.IsNullOrEmpty(secretKey)) throw new Exception("JWT_SECRET is not configured.");
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
@@ -82,6 +64,7 @@ namespace backend.Services
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim("PublicId", user.PublicId.ToString()), // Crucial for identifying the user in requests
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
             };
 
@@ -102,3 +85,4 @@ namespace backend.Services
         }
     }
 }
+

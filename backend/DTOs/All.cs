@@ -1,184 +1,93 @@
 using System.ComponentModel.DataAnnotations;
- 
+using Microsoft.AspNetCore.Mvc;
+
 namespace backend.DTOs
-
 {
-
-    // --- Generic DTOs ---
-
-    public record UserDto(int Id, string Email, string? FirstName, string? LastName);
-
-    public record RoleDto(int Id, string Name);
- 
-    // --- Auth DTOs ---
-
+    // --- AUTH DTOs ---
     public record LoginRequest(string Email, string Password);
+    
+    // DTO for the vendor to submit their password during account setup
+    public record VendorSetPasswordRequest([Required] string Password);
 
-    public record VendorSubmissionRequest(string FirstName, string LastName, string Password);
- 
-    // --- Admin DTOs ---
+    // --- ADMIN DTOs ---
+    public record CreateLeaderRequest(
+        [Required] string Email,
+        [Required] string Password,
+        [Required] string FirstName,
+        [Required] string LastName
+    );
+    public record UserDto(Guid PublicId, string Email, string FirstName, string LastName);
 
-    // Updated to include the new 'Country' property for the vendor.
-
-    public record CreateVendorRequest(string CompanyName, string ContactEmail, string Country);
-
-    public record RejectVendorRequest(string? Reason);
-
+    // --- LEADERSHIP DTOs ---
+    public record CreateVendorRequest(
+        [Required] string CompanyName,
+        [Required] string ContactEmail,
+        [Required] string Country
+    );
     public record VendorDto(
-
-        int Id,
-
+        Guid PublicId,
         string CompanyName,
-
         string ContactEmail,
-
-        string Country, // Added 'Country'
-
-        string Status,
-
-        DateTime CreatedAt,
-
-        int AddedByLeaderId // Renamed from AddedByAdminId to match the updated model
-
+        string Country,
+        string Status
     );
-
-    // New DTO for creating a job.
-
-    // by koushik
     public record CreateJobRequest(
-
         [Required] string Title,
-
         [Required] string Description,
-
         [Required] string Country,
-
-        DateTime ExpiryDate
-
-    );
-    // by rohit
-    public record CreateJobDto(
-        [Required] string Title,
-        [Required] string Description,
-        [Required] string CountryCode,
         [Required] DateTime ExpiryDate,
-        [Required] List<int> VendorIds
+        [Required] List<Guid> AssignedVendorPublicIds
     );
-    // by rohit
-    public record JobDto(int Id, string Title, string Description, DateTime CreatedAt, DateTime ExpiryDate);
- 
-    // --- Vendor DTOs ---
-
-    public class CreateEmployeeDto
-
-    {
-
-        [Required] public string FirstName { get; set; } = string.Empty;
-
-        [Required] public string LastName { get; set; } = string.Empty;
-
-        public string? JobTitle { get; set; }
-
-        public IFormFile? ResumeFile { get; set; }
-
-        public int JobId { get; set; } // Added 'JobId' to link the employee to a job
-
-    }
-
-    public record UpdateEmployeeDto(string FirstName, string LastName, string? JobTitle);
-
-    public record EmployeeDto(
-
-            int Id,
-
-            string FirstName,
-
-            string LastName,
-
-            string? JobTitle,
-
-            int? JobId // Added 'JobId' to the response DTO
-
-    );
-    //public record EmployeeDtoRohit(int Id, string FirstName, string LastName, string? JobTitle);
-    // --- Leadership DTOs ---
-
-    public record VendorDetailDto(
-
-        int Id,
-
-        string CompanyName,
-
-        string ContactEmail,
-
-        string Status,
-
-        List<EmployeeDto> Employees
-
-    );
-
-    public record EmployeeDetailDto(
-
-        int Id,
-
-        string FirstName,
-
-        string LastName,
-
-        string? JobTitle,
-
-        int VendorId,
-
-        string? ResumeDownloadUrl
-
-    );
-
-    public record SearchResultDto(string Type, List<object> Results);
-
-    // New DTOs for the Job entity
-    /*
     public record JobDto(
-
-        int Id,
-
+        Guid PublicId,
         string Title,
-
         string Country,
-
         DateTime CreatedAt,
-
         DateTime ExpiryDate,
-
-        bool IsActive
-
+        double DaysRemaining
     );
-    */
-
-    // DTO for returning full job details, including related employees and vendors
-
+    public record EmployeeWithVendorDto(
+        Guid PublicId,
+        string FirstName,
+        string LastName,
+        string? JobTitle,
+        string VendorCompanyName
+    );
     public record JobDetailDto(
-
-        int Id,
-
+        Guid PublicId,
         string Title,
-
         string Description,
-
         string Country,
-
-        DateTime CreatedAt,
-
         DateTime ExpiryDate,
-
-        bool IsActive,
-
-        UserDto CreatedByLeader,
-
+        UserDto CreatedBy,
         List<VendorDto> AssignedVendors,
-
-        List<EmployeeDto> AssignedEmployees
-
+        List<EmployeeWithVendorDto> SubmittedEmployees
     );
 
+    // --- VENDOR DTOs ---
+    public class CreateEmployeeRequest
+    {
+        [Required] public Guid JobPublicId { get; set; }
+        [Required] public string FirstName { get; set; } = string.Empty;
+        [Required] public string LastName { get; set; } = string.Empty;
+        public string? JobTitle { get; set; }
+        public IFormFile? ResumeFile { get; set; }
+    }
+    public record EmployeeDto(
+        Guid PublicId,
+        string FirstName,
+        string LastName,
+        string? JobTitle
+    );
+    // For detailed employee response
+    public record EmployeeDetailDto(
+        Guid PublicId,
+        string FirstName,
+        string LastName,
+        string? JobTitle,
+        DateTime CreatedAt,
+        string VendorCompanyName,
+        string? ResumeDownloadUrl // This will hold the temporary S3 link
+    );
 }
- 
+

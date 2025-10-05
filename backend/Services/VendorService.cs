@@ -1,9 +1,9 @@
 using Amazon.S3;
 using Amazon.S3.Model;
 using backend.Config;
+using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
-using backend.DTOs;
 
 namespace backend.Services
 {
@@ -18,36 +18,21 @@ namespace backend.Services
             _s3Client = s3Client;
         }
 
-        // Retrieves all employees for the currently logged-in vendor.
-        public async Task<IEnumerable<EmployeeDto>> GetEmployeesAsync(Guid vendorPublicId)
+        public async Task<EmployeeDto?> CreateEmployeeAsync(CreateEmployeeRequest dto, Guid userPublicId)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.PublicId == vendorPublicId);
-            if (vendor == null) return new List<EmployeeDto>();
+            var vendorUser = await _context.Users.FirstOrDefaultAsync(u => u.PublicId == userPublicId);
+            if (vendorUser == null) return null;
+            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.UserId == vendorUser.Id);
+            var job = await _context.Jobs.FirstOrDefaultAsync(j => j.PublicId == dto.JobPublicId);
+            if (vendor == null || job == null) return null;
 
-            return await _context.Employees
-                .Where(e => e.VendorId == vendor.Id)
-                .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId))
-                .ToListAsync();
-        }
-
-        // Creates a new employee and associates them with a Job.
-        public async Task<EmployeeDto?> CreateEmployeeAsync(CreateEmployeeDto dto, Guid vendorPublicId)
-        {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.PublicId == vendorPublicId);
-            if (vendor == null) return null;
-
-            // Check if the vendor is actually assigned to the job before allowing creation.
-            var isAssigned = await _context.JobVendors.AnyAsync(jv => jv.JobId == dto.JobId && jv.VendorId == vendor.Id);
-            if (!isAssigned)
-            {
-                return null;
-            }
+            bool isAssigned = await _context.JobVendors.AnyAsync(jv => jv.JobId == job.Id && jv.VendorId == vendor.Id);
+            if (!isAssigned) return null;
 
             string? resumeS3Key = null;
             if (dto.ResumeFile != null)
             {
-                resumeS3Key = $"resumes/vendor-{vendor.Id}/{Guid.NewGuid()}-{dto.ResumeFile.FileName}";
-
+                resumeS3Key = $"resumes/job-{job.PublicId}/{Guid.NewGuid()}-{dto.ResumeFile.FileName}";
                 var putRequest = new PutObjectRequest
                 {
                     BucketName = Environment.GetEnvironmentVariable("S3_BUCKET"),
@@ -65,54 +50,51 @@ namespace backend.Services
                 JobTitle = dto.JobTitle,
                 ResumeS3Key = resumeS3Key,
                 VendorId = vendor.Id,
-                JobId = dto.JobId, // New: Assign the employee to the specific job.
-                CreatedByUserId = vendor.UserId ?? 0,
-                CreatedAt = DateTime.UtcNow
+                JobId = job.Id,
+                CreatedByUserId = vendorUser.Id
             };
 
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
-            return new EmployeeDto(employee.Id, employee.FirstName, employee.LastName, employee.JobTitle, employee.JobId);
+
+            return new EmployeeDto(employee.PublicId, employee.FirstName, employee.LastName, employee.JobTitle);
         }
 
-        // Retrieves a single employee by their ID, ensuring they belong to the correct vendor.
-        public async Task<EmployeeDto?> GetEmployeeByIdAsync(int employeeId, Guid vendorPublicId)
+        public async Task<bool> SoftDeleteEmployeeAsync(Guid publicId, Guid userPublicId)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.PublicId == vendorPublicId);
-            if (vendor == null) return null;
+            var employee = await _context.Employees.IgnoreQueryFilters()
+                .Include(e => e.Vendor.User)
+                .FirstOrDefaultAsync(e => e.PublicId == publicId && e.Vendor.User.PublicId == userPublicId);
+            
+            if (employee == null) return false;
 
-            return await _context.Employees
-                .Where(e => e.Id == employeeId && e.VendorId == vendor.Id)
-                .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId))
-                .FirstOrDefaultAsync();
+            employee.IsActive = false;
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        // Retrieves all jobs assigned to a specific vendor.
-        public async Task<IEnumerable<JobDto>> GetAssignedJobsAsync(Guid vendorPublicId)
+        public async Task<IEnumerable<JobDto>> GetMyAssignedJobsAsync(Guid userPublicId)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.PublicId == vendorPublicId);
-            if (vendor == null) return new List<JobDto>();
+            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.User.PublicId == userPublicId);
+            if (vendor == null) return Enumerable.Empty<JobDto>();
 
-            // Query the join table to find all jobs assigned to this vendor.
             return await _context.JobVendors
                 .Where(jv => jv.VendorId == vendor.Id)
-                .Select(jv => new JobDto(jv.Job.Id, jv.Job.Title, jv.Job.Description, jv.Job.CreatedAt, jv.Job.ExpiryDate))
+                .Select(jv => jv.Job)
+                .Select(j => new JobDto(j.PublicId, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, (j.ExpiryDate - DateTime.UtcNow).TotalDays))
                 .ToListAsync();
         }
 
-        // Retrieves all employees submitted by a vendor for a particular job.
-        public async Task<IEnumerable<EmployeeDto>> GetEmployeesForJobAsync(int jobId, Guid vendorPublicId)
+        public async Task<IEnumerable<EmployeeDto>> GetMyEmployeesForJobAsync(Guid jobPublicId, Guid userPublicId)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.PublicId == vendorPublicId);
-            if (vendor == null) return new List<EmployeeDto>();
+            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.User.PublicId == userPublicId);
+            if(vendor == null) return Enumerable.Empty<EmployeeDto>();
 
-            // Query employees filtered by both JobId and the vendor's ID for security.
             return await _context.Employees
-                .Where(e => e.JobId == jobId && e.VendorId == vendor.Id)
-                .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId))
+                .Where(e => e.Job.PublicId == jobPublicId && e.VendorId == vendor.Id)
+                .Select(e => new EmployeeDto(e.PublicId, e.FirstName, e.LastName, e.JobTitle))
                 .ToListAsync();
         }
-
-        // You would also need to add UpdateEmployeeAsync and DeleteEmployeeAsync if they are not already here.
     }
 }
+

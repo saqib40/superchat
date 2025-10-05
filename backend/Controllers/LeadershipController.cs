@@ -1,10 +1,8 @@
-// backend/Controllers/LeadershipController.cs
-
+using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using backend.DTOs;
 
 namespace backend.Controllers
 {
@@ -14,103 +12,63 @@ namespace backend.Controllers
     public class LeadershipController : ControllerBase
     {
         private readonly LeadershipService _leadershipService;
-        public LeadershipController(LeadershipService leadershipService)
+        public LeadershipController(LeadershipService leadershipService) => _leadershipService = leadershipService;
+
+        private int GetCurrentUserId() => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+        [HttpPost("vendors")]
+        public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest dto)
         {
-            _leadershipService = leadershipService;
+            var vendor = await _leadershipService.CreateVendorAsync(dto, GetCurrentUserId());
+            if (vendor == null) return BadRequest("Could not create vendor.");
+            return Ok(vendor);
         }
 
-        // Helper method to get the authenticated user's ID.
-        private int GetUserId()
+        [HttpDelete("vendors/{publicId:guid}")]
+        public async Task<IActionResult> SoftDeleteVendor(Guid publicId)
         {
-            // This is a secure way to get the user's ID from their JWT claims.
-            var userIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            // It's a good practice to handle potential nulls or parse errors, though roles should prevent this.
-            return int.Parse(userIdString);
+            var success = await _leadershipService.SoftDeleteVendorAsync(publicId);
+            if (!success) return NotFound();
+            return NoContent();
         }
 
-        // POST /api/leadership/jobs
-        // Endpoint to create a new job.
-        // It accepts a CreateJobDto containing job details and a list of vendor IDs.
         [HttpPost("jobs")]
-        public async Task<IActionResult> CreateJob([FromBody] CreateJobDto dto)
+        public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest dto)
         {
-            var leaderUserId = GetUserId();
-            var newJob = await _leadershipService.CreateJobAsync(dto, leaderUserId);
-
-            if (newJob == null)
-            {
-                // Return a 400 Bad Request if the job creation or vendor assignment fails.
-                return BadRequest("Failed to create job or assign vendors. Check if vendors exist in the specified country.");
-            }
-            // Return a 201 Created response, a RESTful best practice.
-            // This includes the location of the new resource and the created object.
-            return CreatedAtAction(nameof(GetJobById), new { id = newJob.Id }, newJob);
-        }
-
-        // GET /api/leadership/jobs/{id}
-        // Endpoint to get a specific job by its ID.
-        [HttpGet("jobs/{id}")]
-        public async Task<IActionResult> GetJobById(int id)
-        {
-            var job = await _leadershipService.GetJobByIdAsync(id);
-            if (job == null)
-            {
-                // Return 404 Not Found if the job doesn't exist.
-                return NotFound();
-            }
+            var job = await _leadershipService.CreateJobAsync(dto, GetCurrentUserId());
+            if (job == null) return BadRequest("Could not create job. Ensure vendors exist and are in the specified country.");
             return Ok(job);
         }
 
-        // GET /api/leadership/jobs
-        // Endpoint to get all jobs created by the current leader.
-        [HttpGet("jobs")]
-        public async Task<IActionResult> GetJobs()
+        [HttpGet("vendors")]
+        public async Task<IActionResult> GetVendorsByCountry([FromQuery] string country)
         {
-            var leaderUserId = GetUserId();
-            var jobs = await _leadershipService.GetJobsAsync(leaderUserId);
-            return Ok(jobs);
-        }
-
-        // GET /api/leadership/jobs/{jobId}/employees
-        // Endpoint to get all employees mapped to a specific job.
-        [HttpGet("jobs/{jobId}/employees")]
-        public async Task<IActionResult> GetJobEmployees(int jobId)
-        {
-            var employees = await _leadershipService.GetJobEmployeesAsync(jobId);
-            return Ok(employees);
-        }
-
-        // New: Endpoint to retrieve all vendors for a specific country
-        // This is a new requirement. We'll need a new method in the service.
-        [HttpGet("countries/{countryCode}/vendors")]
-        public async Task<IActionResult> GetVendorsByCountry(string countryCode)
-        {
-            var vendors = await _leadershipService.GetVendorsByCountryAsync(countryCode);
-            if (vendors == null || !vendors.Any())
-            {
-                return NotFound("No vendors found for the specified country.");
-            }
+            var vendors = await _leadershipService.GetVendorsByCountryAsync(country);
             return Ok(vendors);
         }
 
-        [HttpPost("vendors")]
-        public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest request)
+        [HttpGet("jobs")]
+        public async Task<IActionResult> GetMyCreatedJobs()
         {
-            var adminIdString = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(adminIdString) || !int.TryParse(adminIdString, out var adminId))
-            {
-                return Unauthorized("Invalid user token.");
-            }
-            // Updated to pass the 'Country' field to the service.
-            var vendor = await _leadershipService.CreateVendorAsync(request.CompanyName, request.ContactEmail, request.Country, adminId);
-            return CreatedAtAction(nameof(GetVendorById), new { id = vendor.Id }, vendor);
+            var jobs = await _leadershipService.GetMyCreatedJobsAsync(GetCurrentUserId());
+            return Ok(jobs);
         }
-        [HttpGet("vendors/{id}")]
-        public async Task<IActionResult> GetVendorById(int id)
+
+        [HttpGet("jobs/{publicId:guid}")]
+        public async Task<IActionResult> GetJobByPublicId(Guid publicId)
         {
-            var vendor = await _leadershipService.GetVendorByIdAsync(id);
-            if (vendor == null) return NotFound();
-            return Ok(vendor);
+            var job = await _leadershipService.GetJobByPublicIdAsync(publicId);
+            if (job == null) return NotFound();
+            return Ok(job);
+        }
+        
+        [HttpGet("employees/{publicId:guid}")]
+        public async Task<IActionResult> GetEmployeeDetails(Guid publicId)
+        {
+            var employee = await _leadershipService.GetEmployeeDetailsAsync(publicId);
+            if (employee == null) return NotFound();
+            return Ok(employee);
         }
     }
 }
+

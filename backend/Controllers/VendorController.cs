@@ -1,8 +1,8 @@
+using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using backend.DTOs;
 
 namespace backend.Controllers
 {
@@ -12,60 +12,37 @@ namespace backend.Controllers
     public class VendorController : ControllerBase
     {
         private readonly VendorService _vendorService;
+        public VendorController(VendorService vendorService) => _vendorService = vendorService;
 
-        public VendorController(VendorService vendorService)
-        {
-            _vendorService = vendorService;
-        }
+        private Guid GetCurrentUserPublicId() => Guid.Parse(User.FindFirstValue("PublicId"));
 
-        private Guid GetVendorPublicId()
-        {
-            var publicIdString = User.FindFirstValue("PublicId");
-            if (string.IsNullOrEmpty(publicIdString))
-            {
-                throw new InvalidOperationException("Vendor PublicId claim not found.");
-            }
-            return Guid.Parse(publicIdString);
-        }
-
-        // POST /api/vendor/employees
         [HttpPost("employees")]
-        public async Task<IActionResult> CreateEmployee([FromForm] CreateEmployeeDto dto)
+        public async Task<IActionResult> CreateEmployee([FromForm] CreateEmployeeRequest dto)
         {
-            var vendorPublicId = GetVendorPublicId();
-            var employee = await _vendorService.CreateEmployeeAsync(dto, vendorPublicId);
-            if (employee == null)
-            {
-                return BadRequest("Could not create employee.");
-            }
-            return CreatedAtAction(nameof(GetEmployeeById), new { id = employee.Id }, employee);
-        }
-
-        // GET /api/vendor/employees/{id}
-        [HttpGet("employees/{id}")]
-        public async Task<IActionResult> GetEmployeeById(int id)
-        {
-            var vendorPublicId = GetVendorPublicId();
-            var employee = await _vendorService.GetEmployeeByIdAsync(id, vendorPublicId);
-            if (employee == null) return NotFound();
+            var employee = await _vendorService.CreateEmployeeAsync(dto, GetCurrentUserPublicId());
+            if (employee == null) return BadRequest("Could not create employee. Ensure you are assigned to this job.");
             return Ok(employee);
         }
 
-        // GET /api/vendor/jobs
-        [HttpGet("jobs")]
-        public async Task<IActionResult> GetAssignedJobs()
+        [HttpDelete("employees/{publicId:guid}")]
+        public async Task<IActionResult> SoftDeleteEmployee(Guid publicId)
         {
-            var vendorPublicId = GetVendorPublicId();
-            var jobs = await _vendorService.GetAssignedJobsAsync(vendorPublicId);
+            var success = await _vendorService.SoftDeleteEmployeeAsync(publicId, GetCurrentUserPublicId());
+            if (!success) return NotFound();
+            return NoContent();
+        }
+
+        [HttpGet("jobs")]
+        public async Task<IActionResult> GetMyAssignedJobs()
+        {
+            var jobs = await _vendorService.GetMyAssignedJobsAsync(GetCurrentUserPublicId());
             return Ok(jobs);
         }
 
-        // GET /api/vendor/jobs/{jobId}/employees
-        [HttpGet("jobs/{jobId}/employees")]
-        public async Task<IActionResult> GetEmployeesForJob(int jobId)
+        [HttpGet("jobs/{jobPublicId:guid}/employees")]
+        public async Task<IActionResult> GetMyEmployeesForJob(Guid jobPublicId)
         {
-            var vendorPublicId = GetVendorPublicId();
-            var employees = await _vendorService.GetEmployeesForJobAsync(jobId, vendorPublicId);
+            var employees = await _vendorService.GetMyEmployeesForJobAsync(jobPublicId, GetCurrentUserPublicId());
             return Ok(employees);
         }
     }

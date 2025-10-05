@@ -8,6 +8,9 @@ namespace backend.Models
         [Key]
         public int Id { get; set; }
         public Guid PublicId { get; set; } = Guid.NewGuid();
+        
+        // --- ADDED for Soft Deletes ---
+        public bool IsActive { get; set; } = true;
 
         [Required]
         [MaxLength(255)]
@@ -32,16 +35,16 @@ namespace backend.Models
         public DateTime? UpdatedAt { get; set; }
 
         // Foreign Keys
-        public int? UserId { get; set; } // The vendor's own user account
-        public int AddedByLeaderId { get; set; }
-        public int? UpdatedByLeaderId { get; set; }
+        public int? UserId { get; set; }
+        public int AddedById { get; set; } // RENAMED from AddedByLeaderId
+        public int? UpdatedById { get; set; }
 
         // Navigation Properties
         [ForeignKey("UserId")]
         public virtual User? User { get; set; }
 
-        [ForeignKey("AddedByLeaderId")]
-        public virtual User AddedByLeader { get; set; } = null!;
+        [ForeignKey("AddedById")]
+        public virtual User AddedBy { get; set; } = null!;
 
         public virtual ICollection<Employee> Employees { get; set; } = new List<Employee>();
         public virtual ICollection<JobVendor> JobAssignments { get; set; } = new List<JobVendor>();
