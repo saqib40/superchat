@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Config;
 
@@ -11,9 +12,11 @@ using backend.Config;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250925113006_anything-dakshita")]
+    partial class anythingdakshita
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -55,9 +58,6 @@ namespace backend.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<int>("JobId")
                         .HasColumnType("int");
@@ -206,9 +206,6 @@ namespace backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AddedById")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -220,9 +217,6 @@ namespace backend.Migrations
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
 
                     b.Property<DateTime?>("LastLoginDate")
                         .HasColumnType("datetime2");
@@ -243,8 +237,6 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddedById");
-
                     b.HasIndex("PublicId")
                         .IsUnique();
 
@@ -259,7 +251,7 @@ namespace backend.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AddedById")
+                    b.Property<int>("AddedByLeaderId")
                         .HasColumnType("int");
 
                     b.Property<string>("CompanyName")
@@ -280,9 +272,6 @@ namespace backend.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
@@ -297,7 +286,7 @@ namespace backend.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("UpdatedById")
+                    b.Property<int?>("UpdatedByLeaderId")
                         .HasColumnType("int");
 
                     b.Property<int?>("UserId")
@@ -308,7 +297,7 @@ namespace backend.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AddedById");
+                    b.HasIndex("AddedByLeaderId");
 
                     b.HasIndex("PublicId")
                         .IsUnique();
@@ -392,21 +381,11 @@ namespace backend.Migrations
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("backend.Models.User", b =>
-                {
-                    b.HasOne("backend.Models.User", "AddedBy")
-                        .WithMany()
-                        .HasForeignKey("AddedById")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("AddedBy");
-                });
-
             modelBuilder.Entity("backend.Models.Vendor", b =>
                 {
-                    b.HasOne("backend.Models.User", "AddedBy")
+                    b.HasOne("backend.Models.User", "AddedByLeader")
                         .WithMany()
-                        .HasForeignKey("AddedById")
+                        .HasForeignKey("AddedByLeaderId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -415,7 +394,7 @@ namespace backend.Migrations
                         .HasForeignKey("backend.Models.Vendor", "UserId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.Navigation("AddedBy");
+                    b.Navigation("AddedByLeader");
 
                     b.Navigation("User");
                 });

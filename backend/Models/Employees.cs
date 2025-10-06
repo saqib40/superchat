@@ -9,6 +9,9 @@ namespace backend.Models
         public int Id { get; set; }
         public Guid PublicId { get; set; } = Guid.NewGuid();
 
+        // --- ADDED for Soft Deletes ---
+        public bool IsActive { get; set; } = true;
+
         [Required]
         [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;

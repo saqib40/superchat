@@ -1,4 +1,5 @@
 using backend.Config;
+using backend.Helpers;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -11,61 +12,51 @@ namespace backend.Services
     public class AuthService
     {
         private readonly ApplicationDbContext _context;
-        public AuthService(ApplicationDbContext context)
+        private readonly IConfiguration _configuration;
+
+        public AuthService(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
+
         public async Task<string?> LoginAsync(string email, string password)
         {
             var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+            if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
             {
                 return null;
             }
-
             return GenerateJwtToken(user);
         }
-        // Updated to use the new User model and link it to the vendor.
-        public async Task<bool> SubmitVendorDetailsAsync(Guid token, string firstName, string lastName, string password)
+        
+        // This method is called when the vendor submits their password after clicking the email link.
+        public async Task<bool> SetupVendorAccountAsync(Guid token, string password)
         {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.VerificationToken == token && v.TokenExpiry > DateTime.UtcNow);
+            var vendor = await _context.Vendors.Include(v => v.User)
+                .FirstOrDefaultAsync(v => v.VerificationToken == token && v.TokenExpiry > DateTime.UtcNow);
 
-            if (vendor == null)
-            {
-                return false;
-            }
+            if (vendor == null || vendor.User == null) return false;
 
-            var vendorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Vendor");
-            if (vendorRole == null)
-            {
-                return false;
-            }
+            // Update the vendor's user account with the password they submitted.
+            var user = vendor.User;
+            user.PasswordHash = PasswordHelper.Hash(password);
 
-            var user = new User
-            {
-                Email = vendor.ContactEmail,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-                FirstName = firstName,
-                LastName = lastName,
-                CreatedAt = DateTime.UtcNow
-            };
-            user.Roles.Add(vendorRole);
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            vendor.UserId = user.Id;
-            vendor.Status = "PendingApproval";
+            // Finalize the vendor status and invalidate the token.
+            vendor.Status = "Verified";
             vendor.VerificationToken = null;
             vendor.TokenExpiry = null;
             await _context.SaveChangesAsync();
 
             return true;
         }
+
         private string GenerateJwtToken(User user)
         {
-            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
-            var audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+            var secretKey = _configuration["JWT_SECRET"];
+            var issuer = _configuration["JWT_ISSUER"];
+            var audience = _configuration["JWT_AUDIENCE"];
+            if (string.IsNullOrEmpty(secretKey)) throw new Exception("JWT_SECRET is not configured.");
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -73,8 +64,10 @@ namespace backend.Services
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new Claim("PublicId", user.PublicId.ToString()), // Crucial for identifying the user in requests
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
             };
+
             foreach (var role in user.Roles)
             {
                 claims.Add(new Claim(ClaimTypes.Role, role.Name));
@@ -92,3 +85,4 @@ namespace backend.Services
         }
     }
 }
+

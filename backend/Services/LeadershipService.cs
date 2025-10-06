@@ -1,140 +1,177 @@
-using Amazon.S3;
-using Amazon.S3.Model;
 using backend.Config;
+using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
-using backend.DTOs;
+using Amazon.S3.Model;
+using Amazon.S3;
 
 namespace backend.Services
 {
     public class LeadershipService
     {
         private readonly ApplicationDbContext _context;
+        private readonly EmailService _emailService;
         private readonly IAmazonS3 _s3Client;
-        public LeadershipService(ApplicationDbContext context, IAmazonS3 s3Client)
+
+        public LeadershipService(ApplicationDbContext context, EmailService emailService, IAmazonS3 s3Client)
         {
             _context = context;
+            _emailService = emailService;
             _s3Client = s3Client;
         }
 
-        // Provides a generic search capability across different entity types (vendors, employees, or jobs).
-        public async Task<SearchResultDto> SearchAsync(string type, string query)
+        public async Task<VendorDto?> CreateVendorAsync(CreateVendorRequest dto, int leaderId)
         {
-            if (string.IsNullOrWhiteSpace(query))
-                return null;
+            var vendorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Vendor");
+            if (vendorRole == null) return null;
 
-            if (type.Equals("vendor", StringComparison.OrdinalIgnoreCase))
-            {
-                var results = await _context.Vendors
-                    .Where(v => v.CompanyName.Contains(query))
-                    .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactEmail, v.Country, v.Status, v.CreatedAt, v.AddedByLeaderId))
-                    .ToListAsync<object>();
-                return new SearchResultDto("Vendor", results);
-            }
-            if (type.Equals("employee", StringComparison.OrdinalIgnoreCase))
-            {
-                var results = await _context.Employees
-                    .Where(e => (e.FirstName + " " + e.LastName).Contains(query))
-                    .Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle, e.JobId))
-                    .ToListAsync<object>();
-                return new SearchResultDto("Employee", results);
-            }
-            // New search type for jobs.
-            if (type.Equals("job", StringComparison.OrdinalIgnoreCase))
-            {
-                var results = await _context.Jobs
-                    .Where(j => j.Title.Contains(query) || j.Description.Contains(query))
-                    .Select(j => new JobDto(j.Id, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, j.IsActive))
-                    .ToListAsync<object>();
-                return new SearchResultDto("Job", results);
-            }
+            // Create a User shell with a placeholder password. The vendor will set their own.
+            var newUser = new User { Email = dto.ContactEmail, PasswordHash = "SETUP_PENDING", AddedById = leaderId };
+            newUser.Roles.Add(vendorRole);
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
 
-            return null;
+            var newVendor = new Vendor
+            {
+                CompanyName = dto.CompanyName,
+                ContactEmail = dto.ContactEmail,
+                Country = dto.Country,
+                Status = "Pending Setup",
+                VerificationToken = Guid.NewGuid(),
+                TokenExpiry = DateTime.UtcNow.AddDays(7),
+                AddedById = leaderId,
+                UserId = newUser.Id
+            };
+            _context.Vendors.Add(newVendor);
+            await _context.SaveChangesAsync();
+
+            await _emailService.SendInvitationEmailAsync(newVendor.ContactEmail, newVendor.VerificationToken.Value);
+
+            return new VendorDto(newVendor.PublicId, newVendor.CompanyName, newVendor.ContactEmail, newVendor.Country, newVendor.Status);
         }
 
-        // Fetches all vendor data for the main leadership dashboard.
-        public async Task<IEnumerable<VendorDto>> GetDashboardAsync()
+        public async Task<bool> SoftDeleteVendorAsync(Guid publicId)
+        {
+            var vendor = await _context.Vendors.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.PublicId == publicId);
+            if (vendor == null) return false;
+
+            vendor.IsActive = false;
+            if (vendor.UserId.HasValue)
+            {
+                var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == vendor.UserId);
+                if (user != null) user.IsActive = false;
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<JobDto?> CreateJobAsync(CreateJobRequest dto, int leaderId)
+        {
+            var assignedVendors = await _context.Vendors
+                .Where(v => dto.AssignedVendorPublicIds.Contains(v.PublicId) && v.Country == dto.Country)
+                .ToListAsync();
+
+            if (!assignedVendors.Any()) return null;
+
+            var newJob = new Job
+            {
+                Title = dto.Title,
+                Description = dto.Description,
+                Country = dto.Country,
+                ExpiryDate = dto.ExpiryDate,
+                CreatedByLeaderId = leaderId,
+            };
+
+            foreach (var vendor in assignedVendors)
+            {
+                newJob.VendorAssignments.Add(new JobVendor { Vendor = vendor });
+            }
+            _context.Jobs.Add(newJob);
+            await _context.SaveChangesAsync();
+
+            return new JobDto(newJob.PublicId, newJob.Title, newJob.Country, newJob.CreatedAt, newJob.ExpiryDate, (newJob.ExpiryDate - DateTime.UtcNow).TotalDays);
+        }
+
+        public async Task<IEnumerable<VendorDto>> GetVendorsByCountryAsync(string country)
         {
             return await _context.Vendors
-                .Select(v => new VendorDto(v.Id, v.CompanyName, v.ContactEmail, v.Country, v.Status, v.CreatedAt, v.AddedByLeaderId))
+                .Where(v => v.Country == country)
+                .Select(v => new VendorDto(v.PublicId, v.CompanyName, v.ContactEmail, v.Country, v.Status))
                 .ToListAsync();
         }
 
-        // Retrieves a single vendor by their ID, including all their associated employees.
-        public async Task<VendorDetailDto?> GetVendorByIdAsync(int vendorId)
+        public async Task<IEnumerable<JobDto>> GetMyCreatedJobsAsync(int leaderId)
         {
-            return await _context.Vendors
-                .Where(v => v.Id == vendorId)
-                .Select(v => new VendorDetailDto(
-                    v.Id,
-                    v.CompanyName,
-                    v.ContactEmail,
-                    v.Status,
-                    v.Employees.Select(e => new EmployeeDto(e.Id, e.FirstName, e.LastName, e.JobTitle)).ToList()
+            return await _context.Jobs
+               .Where(j => j.CreatedByLeaderId == leaderId)
+               .Select(j => new JobDto(j.PublicId, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, (j.ExpiryDate - DateTime.UtcNow).TotalDays))
+               .ToListAsync();
+        }
+
+        public async Task<JobDetailDto?> GetJobByPublicIdAsync(Guid publicId)
+        {
+            return await _context.Jobs
+                .Where(j => j.PublicId == publicId)
+                .Select(j => new JobDetailDto(
+                    j.PublicId,
+                    j.Title,
+                    j.Description,
+                    j.Country,
+                    j.ExpiryDate,
+                    new UserDto(j.CreatedByLeader.PublicId, j.CreatedByLeader.Email, j.CreatedByLeader.FirstName, j.CreatedByLeader.LastName),
+                    j.VendorAssignments.Select(va => new VendorDto(va.Vendor.PublicId, va.Vendor.CompanyName, va.Vendor.ContactEmail, va.Vendor.Country, va.Vendor.Status)).ToList(),
+                    j.Employees.Select(e => new EmployeeWithVendorDto(
+                        e.PublicId,
+                        e.FirstName,
+                        e.LastName,
+                        e.JobTitle,
+                        e.Vendor.CompanyName
+                    )).ToList()
                 ))
                 .FirstOrDefaultAsync();
         }
-
-        // Retrieves a single employee's details and generates a secure, temporary link to their resume.
-        public async Task<EmployeeDetailDto?> GetEmployeeByIdAsync(int vendorId, int employeeId)
+        
+        public async Task<EmployeeDetailDto?> GetEmployeeDetailsAsync(Guid publicId)
         {
             var employee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.Id == employeeId && e.VendorId == vendorId);
+                .Include(e => e.Vendor) // Include Vendor to get the company name
+                .Where(e => e.PublicId == publicId)
+                .Select(e => new
+                {
+                    e.PublicId,
+                    e.FirstName,
+                    e.LastName,
+                    e.JobTitle,
+                    e.CreatedAt,
+                    e.Vendor.CompanyName,
+                    e.ResumeS3Key // We need the S3 key to generate the URL
+                })
+                .FirstOrDefaultAsync();
 
             if (employee == null) return null;
 
             string? resumeUrl = null;
             if (!string.IsNullOrEmpty(employee.ResumeS3Key))
             {
-                resumeUrl = GeneratePresignedUrl(employee.ResumeS3Key);
-            }
-
-            return new EmployeeDetailDto(employee.Id, employee.FirstName, employee.LastName, employee.JobTitle, employee.VendorId, resumeUrl);
-        }
-
-        // New method to get all jobs.
-        public async Task<IEnumerable<JobDto>> GetAllJobsAsync()
-        {
-            return await _context.Jobs
-                .Select(j => new JobDto(j.Id, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, j.IsActive))
-                .ToListAsync();
-        }
-
-        // New method to assign a job to one or more vendors.
-        public async Task<bool> AssignVendorsToJobAsync(int jobId, List<int> vendorIds)
-        {
-            var job = await _context.Jobs.FindAsync(jobId);
-            if (job == null) return false;
-
-            // Remove existing assignments to prevent duplicates.
-            var existingAssignments = await _context.JobVendors
-                .Where(jv => jv.JobId == jobId)
-                .ToListAsync();
-            _context.JobVendors.RemoveRange(existingAssignments);
-
-            // Add new assignments based on the list of vendor IDs.
-            foreach (var vendorId in vendorIds)
-            {
-                var vendor = await _context.Vendors.FindAsync(vendorId);
-                if (vendor != null)
+                var request = new GetPreSignedUrlRequest
                 {
-                    _context.JobVendors.Add(new JobVendor { JobId = jobId, VendorId = vendorId });
-                }
+                    BucketName = Environment.GetEnvironmentVariable("S3_BUCKET"),
+                    Key = employee.ResumeS3Key,
+                    Expires = DateTime.UtcNow.AddMinutes(15) // The URL will be valid for 15 minutes
+                };
+                resumeUrl = _s3Client.GetPreSignedURL(request);
             }
 
-            await _context.SaveChangesAsync();
-            return true;
-        }
-
-        private string GeneratePresignedUrl(string key)
-        {
-            var request = new GetPreSignedUrlRequest
-            {
-                BucketName = Environment.GetEnvironmentVariable("S3_BUCKET"),
-                Key = key,
-                Expires = DateTime.UtcNow.AddMinutes(5)
-            };
-            return _s3Client.GetPreSignedURL(request);
+            return new EmployeeDetailDto(
+                employee.PublicId,
+                employee.FirstName,
+                employee.LastName,
+                employee.JobTitle,
+                employee.CreatedAt,
+                employee.CompanyName,
+                resumeUrl
+            );
         }
     }
 }
+

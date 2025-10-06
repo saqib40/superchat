@@ -1,8 +1,8 @@
+using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using backend.DTOs;
 
 namespace backend.Controllers
 {
@@ -12,62 +12,38 @@ namespace backend.Controllers
     public class VendorController : ControllerBase
     {
         private readonly VendorService _vendorService;
-        public VendorController(VendorService vendorService)
-        {
-            _vendorService = vendorService;
-        }
-        
-        // Defines the endpoint at GET /api/vendor/employees
-        [HttpGet("employees")]
-        public async Task<IActionResult> GetEmployees()
-        {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var employees = await _vendorService.GetEmployeesAsync(vendorUserId);
-            return Ok(employees);
-        }
+        public VendorController(VendorService vendorService) => _vendorService = vendorService;
 
-        // Defines the endpoint at POST /api/vendor/employees
-        // Updated to include JobId from the DTO.
+        private Guid GetCurrentUserPublicId() => Guid.Parse(User.FindFirstValue("PublicId"));
+
         [HttpPost("employees")]
-        public async Task<IActionResult> CreateEmployee([FromForm] CreateEmployeeDto dto)
+        public async Task<IActionResult> CreateEmployee([FromForm] CreateEmployeeRequest dto)
         {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var employee = await _vendorService.CreateEmployeeAsync(dto, vendorUserId);
-            if (employee == null)
-            {
-                return BadRequest("Could not create employee.");
-            }
-            return CreatedAtAction(nameof(GetEmployeeById), new { id = employee.Id }, employee);
-        }
-        
-        // Defines the endpoint at GET /api/vendor/employees/{id}
-        [HttpGet("employees/{id}")]
-        public async Task<IActionResult> GetEmployeeById(int id)
-        {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var employee = await _vendorService.GetEmployeeByIdAsync(id, vendorUserId);
-            if (employee == null) return NotFound();
+            var employee = await _vendorService.CreateEmployeeAsync(dto, GetCurrentUserPublicId());
+            if (employee == null) return BadRequest("Could not create employee. Ensure you are assigned to this job.");
             return Ok(employee);
         }
 
-        // Defines the endpoint at PUT /api/vendor/employees/{id}
-        [HttpPut("employees/{id}")]
-        public async Task<IActionResult> UpdateEmployee(int id, [FromBody] UpdateEmployeeDto dto)
+        [HttpDelete("employees/{publicId:guid}")]
+        public async Task<IActionResult> SoftDeleteEmployee(Guid publicId)
         {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var employee = await _vendorService.UpdateEmployeeAsync(id, dto, vendorUserId);
-            if (employee == null) return NotFound();
-            return Ok(employee);
-        }
-
-        // Defines the endpoint at DELETE /api/vendor/employees/{id}
-        [HttpDelete("employees/{id}")]
-        public async Task<IActionResult> DeleteEmployee(int id)
-        {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var success = await _vendorService.DeleteEmployeeAsync(id, vendorUserId);
+            var success = await _vendorService.SoftDeleteEmployeeAsync(publicId, GetCurrentUserPublicId());
             if (!success) return NotFound();
             return NoContent();
+        }
+
+        [HttpGet("jobs")]
+        public async Task<IActionResult> GetMyAssignedJobs()
+        {
+            var jobs = await _vendorService.GetMyAssignedJobsAsync(GetCurrentUserPublicId());
+            return Ok(jobs);
+        }
+
+        [HttpGet("jobs/{jobPublicId:guid}/employees")]
+        public async Task<IActionResult> GetMyEmployeesForJob(Guid jobPublicId)
+        {
+            var employees = await _vendorService.GetMyEmployeesForJobAsync(jobPublicId, GetCurrentUserPublicId());
+            return Ok(employees);
         }
 
         // New endpoint to get the jobs assigned to the current vendor.

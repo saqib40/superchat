@@ -24,14 +24,15 @@ class Program
         bool isVerified = BCrypt.Net.BCrypt.Verify(password, hashedPassword);
         Console.WriteLine($"Verification check: {(isVerified ? "Successful" : "Failed")}");
     }
-    private const int SaltSize = 16;
-    private const int KeySize = 32;
+    private const int SaltSize = 16; // salt to add, thereby identical passwords will have different hashes
+    private const int KeySize = 32; // hash size
     private const int Iterations = 10000;
     private const char Delimiter = ';';
     private static readonly HashAlgorithmName _hashAlgorithm = HashAlgorithmName.SHA256;
 
     public static string HashInbuilt(string password)
     {
+        Console.WriteLine(password);
         var salt = RandomNumberGenerator.GetBytes(SaltSize);
         var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, _hashAlgorithm, KeySize);
         return string.Join(Delimiter, Convert.ToBase64String(salt), Convert.ToBase64String(hash));
@@ -58,6 +59,11 @@ class Program
         // Call the function with a sample password
         string hasheg = HashInbuilt("hlo123");
         Console.WriteLine(hasheg);
-        Console.WriteLine(HashVerify("hlo123", hasheg));
+        hasheg = HashInbuilt("hii12345");
+        Console.WriteLine(hasheg);
+        hasheg = HashInbuilt("12345");
+        Console.WriteLine(hasheg);
+        hasheg = HashInbuilt("1234");
+        Console.WriteLine(hasheg);
     }
 }

@@ -1,46 +1,31 @@
+// src/app/services/vendor.service.ts
+
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-
-
-export interface Vendor {
-  id: number;
-  companyName: string;
-  contactEmail: string;
-  status: 'Verified' | 'PendingApproval';
-}
+import { Job, Employee } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class VendorService {
-  private apiUrl = `${environment.apiUrl}/Admin/vendors`;
+  private apiUrl = `${environment.apiUrl}/Vendor`;
 
   constructor(private http: HttpClient) {}
 
-  getVendors(): Observable<Vendor[]> {
-  return this.http.get<Vendor[]>(this.apiUrl);
-}
-
-approveVendor(id: number): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}/approve`, {});
+  getMyAssignedJobs(): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.apiUrl}/jobs`);
   }
 
-  sendInvitation(companyName: string, contactEmail: string): Observable<any> {
-    return this.http.post(
-      this.apiUrl,
-      { companyName, contactEmail });
+  getEmployeesForJob(jobPublicId: string): Observable<Employee[]> {
+    return this.http.get<Employee[]>(`${this.apiUrl}/jobs/${jobPublicId}/employees`);
   }
 
-  rejectVendor(id: number): Observable<any> {
-  return this.http.put(`${this.apiUrl}/${id}/reject`, {});
-}
+  createEmployee(formData: FormData): Observable<Employee> {
+    // Note: The backend expects multipart/form-data, so we send FormData directly
+    return this.http.post<Employee>(`${this.apiUrl}/employees`, formData);
+  }
 
-deleteVendor(id: number): Observable<any> {
-  return this.http.delete(`${this.apiUrl}/${id}`);
+  deleteEmployee(publicId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/employees/${publicId}`);
+  }
 }
-
-getVendorById(id: number): Observable<any> {
-  return this.http.get<any>(`${this.apiUrl}/${id}`);
-}
-}
-
