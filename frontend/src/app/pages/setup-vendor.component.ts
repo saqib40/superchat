@@ -62,6 +62,14 @@ export class SetupVendorComponent implements OnInit {
       this.error = 'Passwords do not match.';
       return;
     }
+
+    // Check password strength
+  const passwordValid = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/.test(this.password);
+  if (!passwordValid) {
+    this.error = 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.';
+    return;
+  }
+  
     if (!this.token) {
         this.error = 'Cannot submit without a valid setup token.';
         return;

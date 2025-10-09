@@ -5,6 +5,8 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
 import { User } from '../../models';
+import { passwordValidator } from '../../validators/password.validator';
+
 
 @Component({
   standalone: true,
@@ -18,6 +20,8 @@ import { User } from '../../models';
           <input formControlName="lastName" placeholder="Last Name" class="px-3 py-2 border rounded">
           <input formControlName="email" type="email" placeholder="Email" class="px-3 py-2 border rounded">
           <input formControlName="password" type="password" placeholder="Password" class="px-3 py-2 border rounded">
+          <div *ngIf="leaderForm.get('password')?.errors?.['passwordStrength'] && leaderForm.get('password')?.touched"></div> <!-- added the password check logic -->
+
           <button type="submit" [disabled]="leaderForm.invalid" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400 col-span-1 md:col-span-3">Create Leader</button>
         </form>
       </div>
@@ -46,7 +50,7 @@ export class ManageLeadersComponent implements OnInit {
       firstName: ['', Validators.required],
       lastName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      password: ['', Validators.required],
+      password: ['', Validators.required,passwordValidator], //added te validator logic 
     });
   }
 
