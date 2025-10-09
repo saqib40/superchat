@@ -1,60 +1,70 @@
+-- Idempotent Version
+
 SET QUOTED_IDENTIFIER ON;
 GO
+-- The USE statement might not be needed if the -d flag is used, but it's safe to keep.
 USE superchat;
 GO
 
--- 1. DECLARE VARIABLES for User IDs, Vendor IDs, and Role IDs
+-- 1. DECLARE VARIABLES (No changes here)
 DECLARE @AdminUserId INT, @LeaderUserId INT, @VendorUserId INT;
 DECLARE @SampleVendorId INT;
-DECLARE @RoleAdminId INT = 1;
-DECLARE @RoleLeaderId INT = 2;
-DECLARE @RoleVendorId INT = 3;
+DECLARE @RoleAdminId INT = 1, @RoleLeaderId INT = 2, @RoleVendorId INT = 3;
 
 
--- 2. CREATE SAMPLE USERS AND CAPTURE THEIR NEW IDs
+-- 2. CREATE SAMPLE USERS (with existence checks)
 
--- ADMIN USER 1 (Password: hlo123)
--- This user is the root, so it has no 'AddedById'
-INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId)
-VALUES ('admin@example.com', '6BUs2KZD3CddlP5NMEdTog==;R9FPf6LiAFph/Mf0nm6O7oFc4+8zuFMNVZaTO6Ou83k=', 'Admin', 'User', 1, GETUTCDATE(), NEWID());
-SET @AdminUserId = SCOPE_IDENTITY();
-
--- leader
---rohit@gmail.com
---123ok
--- LEADER USER (Password: hii12345)
--- ADDED: The 'AddedById' column to track that the Admin created this user
-INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId, AddedById)
-VALUES ('leader@example.com', 'rRgO6Fn88OwNTmZ3RdvF6Q==;YSnvL5y3gUymscMrfkw2A8QFq172PGPuVpNi189472c=', 'Lead', 'User', 1, GETUTCDATE(), NEWID(), @AdminUserId);
-SET @LeaderUserId = SCOPE_IDENTITY();
-
--- VENDOR USER (Password: 12345)
--- ADDED: The 'AddedById' column to track that the Admin created this user (could also be the leader)
-INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId, AddedById)
-VALUES ('vendor@example.com', 'aDFzZFm2bkV2aWW3APVpzw==;OV6teR+9jhsN2gJZsZW3/W8wf2Z3EHwZKGDGDxTrOXs=', 'Vendor', 'User', 1, GETUTCDATE(), NEWID(), @AdminUserId);
-SET @VendorUserId = SCOPE_IDENTITY();
+-- ADMIN USER 1
+IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'admin@example.com')
+BEGIN
+    INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId)
+    VALUES ('admin@example.com', '6BUs2KZD3CddlP5NMEdTog==;R9FPf6LiAFph/Mf0nm6O7oFc4+8zuFMNVZaTO6Ou83k=', 'Admin', 'User', 1, GETUTCDATE(), NEWID());
+END
+-- Always get the ID, whether it was just inserted or already existed
+SET @AdminUserId = (SELECT Id FROM Users WHERE Email = 'admin@example.com');
 
 
--- 3. LINK USERS TO ROLES (The Role IDs 1, 2, 3 are already in the DB from the migration)
-INSERT INTO UserRoles (UsersId, RolesId) VALUES (@AdminUserId, @RoleAdminId);      -- Admin User
-INSERT INTO UserRoles (UsersId, RolesId) VALUES (@LeaderUserId, @RoleLeaderId);    -- Leader User
-INSERT INTO UserRoles (UsersId, RolesId) VALUES (@VendorUserId, @RoleVendorId);    -- Vendor User
+-- LEADER USER
+IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'leader@example.com')
+BEGIN
+    INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId, AddedById)
+    VALUES ('leader@example.com', 'rRgO6Fn88OwNTmZ3RdvF6Q==;YSnvL5y3gUymscMrfkw2A8QFq172PGPuVpNi189472c=', 'Lead', 'User', 1, GETUTCDATE(), NEWID(), @AdminUserId);
+END
+SET @LeaderUserId = (SELECT Id FROM Users WHERE Email = 'leader@example.com');
 
 
--- 4. CREATE A SAMPLE VENDOR RECORD
--- This links the Vendor's User account (@VendorUserId) and sets the Leader who added them (@LeaderUserId).
--- CHANGED: 'AddedByLeaderId' to 'AddedById' to match the EF Core model.
--- ADDED: 'IsActive' for completeness.
-INSERT INTO Vendors (CompanyName, ContactEmail, Country, Status, IsActive, UserId, AddedById, CreatedAt, PublicId)
-VALUES ('Sample Vendor Co', 'vendor@example.com', 'USA', 'Active', 1, @VendorUserId, @LeaderUserId, GETUTCDATE(), NEWID());
-SET @SampleVendorId = SCOPE_IDENTITY();
+-- VENDOR USER
+IF NOT EXISTS (SELECT 1 FROM Users WHERE Email = 'vendor@example.com')
+BEGIN
+    INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId, AddedById)
+    VALUES ('vendor@example.com', 'aDFzZFm2bkV2aWW3APVpzw==;OV6teR+9jhsN2gJZsZW3/W8wf2Z3EHwZKGDGDxTrOXs=', 'Vendor', 'User', 1, GETUTCDATE(), NEWID(), @AdminUserId);
+END
+SET @VendorUserId = (SELECT Id FROM Users WHERE Email = 'vendor@example.com');
 
 
--- 5. VERIFY THE FINAL RESULT
-SELECT u.Id, u.Email, u.AddedById, r.Name AS RoleName
-FROM Users u
-LEFT JOIN UserRoles ur ON u.Id = ur.UsersId
-LEFT JOIN Roles r ON ur.RolesId = r.Id;
+-- 3. LINK USERS TO ROLES (with existence checks)
+IF NOT EXISTS (SELECT 1 FROM UserRoles WHERE UsersId = @AdminUserId AND RolesId = @RoleAdminId)
+BEGIN
+    INSERT INTO UserRoles (UsersId, RolesId) VALUES (@AdminUserId, @RoleAdminId);
+END
 
-SELECT CompanyName, ContactEmail, Country, UserId, AddedById FROM Vendors;
+IF NOT EXISTS (SELECT 1 FROM UserRoles WHERE UsersId = @LeaderUserId AND RolesId = @RoleLeaderId)
+BEGIN
+    INSERT INTO UserRoles (UsersId, RolesId) VALUES (@LeaderUserId, @RoleLeaderId);
+END
+
+IF NOT EXISTS (SELECT 1 FROM UserRoles WHERE UsersId = @VendorUserId AND RolesId = @RoleVendorId)
+BEGIN
+    INSERT INTO UserRoles (UsersId, RolesId) VALUES (@VendorUserId, @RoleVendorId);
+END
+
+
+-- 4. CREATE A SAMPLE VENDOR RECORD (with existence check)
+IF NOT EXISTS (SELECT 1 FROM Vendors WHERE CompanyName = 'Sample Vendor Co')
+BEGIN
+    INSERT INTO Vendors (CompanyName, ContactEmail, Country, Status, IsActive, UserId, AddedById, CreatedAt, PublicId)
+    VALUES ('Sample Vendor Co', 'vendor@example.com', 'USA', 'Active', 1, @VendorUserId, @LeaderUserId, GETUTCDATE(), NEWID());
+END
+SET @SampleVendorId = (SELECT Id FROM Vendors WHERE CompanyName = 'Sample Vendor Co');
+
 GO
