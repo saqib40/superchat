@@ -19,6 +19,9 @@ INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt
 VALUES ('admin@example.com', '6BUs2KZD3CddlP5NMEdTog==;R9FPf6LiAFph/Mf0nm6O7oFc4+8zuFMNVZaTO6Ou83k=', 'Admin', 'User', 1, GETUTCDATE(), NEWID());
 SET @AdminUserId = SCOPE_IDENTITY();
 
+-- leader
+--rohit@gmail.com
+--123ok
 -- LEADER USER (Password: hii12345)
 -- ADDED: The 'AddedById' column to track that the Admin created this user
 INSERT INTO Users (Email, PasswordHash, FirstName, LastName, IsActive, CreatedAt, PublicId, AddedById)
