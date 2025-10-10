@@ -61,7 +61,7 @@ namespace backend.Controllers
             if (job == null) return NotFound();
             return Ok(job);
         }
-        
+
         [HttpGet("employees/{publicId:guid}")]
         public async Task<IActionResult> GetEmployeeDetails(Guid publicId)
         {
@@ -70,27 +70,6 @@ namespace backend.Controllers
             return Ok(employee);
         }
 
-        // New endpoint to get all jobs for leadership.
-        // GET /api/leadership/jobs
-        [HttpGet("jobs")]
-        public async Task<IActionResult> GetAllJobs()
-        {
-            var jobs = await _leadershipService.GetAllJobsAsync();
-            return Ok(jobs);
-        }
-
-        // New endpoint to assign a job to one or more vendors.
-        // POST /api/leadership/jobs/{jobId}/assign-vendors
-        [HttpPost("jobs/{jobId}/assign-vendors")]
-        public async Task<IActionResult> AssignVendorsToJob(int jobId, [FromBody] List<int> vendorIds)
-        {
-            var success = await _leadershipService.AssignVendorsToJobAsync(jobId, vendorIds);
-            if (!success)
-            {
-                return BadRequest("Failed to assign vendors to job.");
-            }
-            return Ok(new { message = "Vendors assigned successfully." });
-        }
     }
 }
 
