@@ -46,14 +46,5 @@ namespace backend.Controllers
             return Ok(employees);
         }
 
-        // New endpoint to get the jobs assigned to the current vendor.
-        // GET /api/vendor/jobs
-        [HttpGet("jobs")]
-        public async Task<IActionResult> GetAssignedJobs()
-        {
-            var vendorUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-            var jobs = await _vendorService.GetAssignedJobsAsync(vendorUserId);
-            return Ok(jobs);
-        }
     }
 }
