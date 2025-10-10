@@ -3,6 +3,7 @@ using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -19,6 +20,10 @@ namespace backend.Controllers
         [HttpPost("vendors")]
         public async Task<IActionResult> CreateVendor([FromBody] CreateVendorRequest dto)
         {
+            if (!CountryValidator.IsValidCountry(dto.Country))
+            {
+                return BadRequest("Invalid country. Please select a valid country.");
+            }
             var vendor = await _leadershipService.CreateVendorAsync(dto, GetCurrentUserId());
             if (vendor == null) return BadRequest("Could not create vendor.");
             return Ok(vendor);
@@ -35,6 +40,10 @@ namespace backend.Controllers
         [HttpPost("jobs")]
         public async Task<IActionResult> CreateJob([FromBody] CreateJobRequest dto)
         {
+            if (!CountryValidator.IsValidCountry(dto.Country))
+            {
+                return BadRequest("Invalid country. Please select a valid country.");
+            }
             var job = await _leadershipService.CreateJobAsync(dto, GetCurrentUserId());
             if (job == null) return BadRequest("Could not create job. Ensure vendors exist and are in the specified country.");
             return Ok(job);
@@ -43,6 +52,10 @@ namespace backend.Controllers
         [HttpGet("vendors")]
         public async Task<IActionResult> GetVendorsByCountry([FromQuery] string country)
         {
+            if (!CountryValidator.IsValidCountry(country))
+            {
+                return BadRequest("Invalid country. Please select a valid country.");
+            }
             var vendors = await _leadershipService.GetVendorsByCountryAsync(country);
             return Ok(vendors);
         }
