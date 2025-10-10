@@ -5,7 +5,7 @@ namespace backend.DTOs
 {
     // --- AUTH DTOs ---
     public record LoginRequest(string Email, string Password);
-    
+
     // DTO for the vendor to submit their password during account setup
     public record VendorSetPasswordRequest([Required] string Password);
 
@@ -90,4 +90,5 @@ namespace backend.DTOs
         string? ResumeDownloadUrl // This will hold the temporary S3 link
     );
 }
+public record UpdateEmployeeStatusRequest(string Status);
 

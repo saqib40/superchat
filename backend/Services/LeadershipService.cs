@@ -130,7 +130,7 @@ namespace backend.Services
                 ))
                 .FirstOrDefaultAsync();
         }
-        
+
         public async Task<EmployeeDetailDto?> GetEmployeeDetailsAsync(Guid publicId)
         {
             var employee = await _context.Employees
@@ -171,6 +171,48 @@ namespace backend.Services
                 employee.CompanyName,
                 resumeUrl
             );
+        }
+        // --- NEW METHOD FOR UPDATING EMPLOYEE STATUS ---
+        public async Task<bool> UpdateEmployeeStatusAsync(Guid publicId, string newStatus, int leaderId)
+        {
+            // 1. Validate the incoming status against the list of valid statuses a leader can set.
+            var validLeaderStatuses = new List<string> { "Under Review", "Shortlisted", "Hired", "Rejected" };
+            if (!validLeaderStatuses.Contains(newStatus))
+            {
+                return false; // The status is not a valid one.
+            }
+
+            // 2. Find the employee in the database and include their related Job.
+            // We need the Job object to update its status if the employee is hired.
+            var employee = await _context.Employees
+                .Include(e => e.Job) // Eagerly load the related Job
+                .FirstOrDefaultAsync(e => e.PublicId == publicId);
+
+            if (employee == null)
+            {
+                return false; // The employee was not found.
+            }
+
+            // 3. Update the employee's status and the audit fields.
+            employee.Status = newStatus;
+            employee.UpdatedByUserId = leaderId;
+            employee.UpdatedAt = DateTime.UtcNow;
+
+            // 4. Handle the "Hired" side-effect based on our design.
+            if (newStatus == "Hired")
+            {
+                // If the employee is hired, we automatically close the associated job.
+                // This is a great example of business logic automation.
+                if (employee.Job != null)
+                {
+                    employee.Job.Status = "Closed";
+                }
+            }
+
+            // 5. Save all the changes (to both the Employee and potentially the Job) to the database.
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

@@ -68,6 +68,25 @@ namespace backend.Controllers
             var employee = await _leadershipService.GetEmployeeDetailsAsync(publicId);
             if (employee == null) return NotFound();
             return Ok(employee);
+
+        }
+        // --- NEW ENDPOINT FOR STATUS UPDATE ---
+        [HttpPut("employees/{publicId:guid}/statusupdate")]
+        public async Task<IActionResult> UpdateEmployeeStatus(Guid publicId, [FromBody] UpdateEmployeeStatusRequest dto)
+        {
+            // We get the current user's ID to pass to the service for logging/auditing.
+            var leaderId = GetCurrentUserId();
+
+            var success = await _leadershipService.UpdateEmployeeStatusAsync(publicId, dto.Status, leaderId);
+
+            if (!success)
+            {
+                // The service will return false if the employee isn't found or the status is invalid.
+                return BadRequest("Could not update status. Employee not found or status is invalid.");
+            }
+
+            // A 204 No Content response is standard for a successful PUT request that doesn't need to return data.
+            return NoContent();
         }
 
     }

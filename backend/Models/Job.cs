@@ -20,6 +20,11 @@ namespace backend.Models
         [MaxLength(100)]
         public string Country { get; set; } = string.Empty;
 
+        // --- NEW PROPERTY ADDED HERE ---
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Open"; // Default status for all new jobs
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime ExpiryDate { get; set; }
         public bool IsActive { get; set; } = true;
