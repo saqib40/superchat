@@ -1,0 +1,19 @@
+# IDE and tool folders
+.vs/
+.vscode/
+
+# Build output folders
+bin/
+obj/
+
+# User-specific files
+*.user
+*.userosscache
+*.sln.docstates
+
+# Environment files (should never be in the image)
+.env
+
+# Docker files
+Dockerfile
+Dockerfile.db-seeder
