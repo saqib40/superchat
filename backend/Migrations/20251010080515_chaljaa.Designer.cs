@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Config;
 
@@ -11,9 +12,11 @@ using backend.Config;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251010080515_chaljaa")]
+    partial class chaljaa
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -35,43 +38,6 @@ namespace backend.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("UserRoles", (string)null);
-                });
-
-            modelBuilder.Entity("backend.Models.Conversation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("JobId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LeaderId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("VendorId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("LeaderId");
-
-                    b.HasIndex("PublicId")
-                        .IsUnique();
-
-                    b.HasIndex("VendorId");
-
-                    b.ToTable("Conversations");
                 });
 
             modelBuilder.Entity("backend.Models.Employee", b =>
@@ -114,11 +80,6 @@ namespace backend.Migrations
                     b.Property<string>("ResumeS3Key")
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -208,39 +169,6 @@ namespace backend.Migrations
                     b.HasIndex("VendorId");
 
                     b.ToTable("JobVendors");
-                });
-
-            modelBuilder.Entity("backend.Models.Message", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ConversationId")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SenderId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ConversationId");
-
-                    b.HasIndex("SenderId");
-
-                    b.ToTable("Messages");
                 });
 
             modelBuilder.Entity("backend.Models.Role", b =>
@@ -415,33 +343,6 @@ namespace backend.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("backend.Models.Conversation", b =>
-                {
-                    b.HasOne("backend.Models.Job", "Job")
-                        .WithMany()
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "Leader")
-                        .WithMany()
-                        .HasForeignKey("LeaderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Vendor", "Vendor")
-                        .WithMany()
-                        .HasForeignKey("VendorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Job");
-
-                    b.Navigation("Leader");
-
-                    b.Navigation("Vendor");
-                });
-
             modelBuilder.Entity("backend.Models.Employee", b =>
                 {
                     b.HasOne("backend.Models.User", "CreatedByUser")
@@ -499,25 +400,6 @@ namespace backend.Migrations
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("backend.Models.Message", b =>
-                {
-                    b.HasOne("backend.Models.Conversation", "Conversation")
-                        .WithMany("Messages")
-                        .HasForeignKey("ConversationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.User", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Conversation");
-
-                    b.Navigation("Sender");
-                });
-
             modelBuilder.Entity("backend.Models.User", b =>
                 {
                     b.HasOne("backend.Models.User", "AddedBy")
@@ -544,11 +426,6 @@ namespace backend.Migrations
                     b.Navigation("AddedBy");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("backend.Models.Conversation", b =>
-                {
-                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("backend.Models.Job", b =>

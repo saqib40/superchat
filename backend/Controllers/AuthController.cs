@@ -2,6 +2,7 @@ using backend.DTOs;
 using backend.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using backend.Helpers;
 
 namespace backend.Controllers
 {
@@ -25,6 +26,10 @@ namespace backend.Controllers
         [HttpPost("setup-vendor/{token:guid}")]
         public async Task<IActionResult> SetupVendor(Guid token, [FromBody] VendorSetPasswordRequest request)
         {
+            if (!PasswordValidator.IsStrongPassword(request.Password))
+            {
+                return BadRequest("Password does not meet strength requirements.");
+            }
             var success = await _authService.SetupVendorAccountAsync(token, request.Password);
             if (!success)
             {

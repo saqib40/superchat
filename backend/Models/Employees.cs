@@ -26,6 +26,11 @@ namespace backend.Models
         [MaxLength(1024)]
         public string? ResumeS3Key { get; set; }
 
+        // --- NEW PROPERTY ADDED HERE ---
+        [Required]
+        [MaxLength(50)]
+        public string Status { get; set; } = "Submitted"; // Default status for all new employees
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 
