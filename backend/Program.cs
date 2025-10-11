@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
 using backend.Hubs;
+using AspNetCoreRateLimit;
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
@@ -18,7 +19,17 @@ if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- CORS policy name ---
+builder.Services.AddMemoryCache(); // for rate limiting
+
+builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+
+builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+builder.Services.AddSingleton<IProcessingStrategy, AsyncKeyLockProcessingStrategy>();
+builder.Services.AddInMemoryRateLimiting();
+
+// CORS policy name
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
@@ -144,6 +155,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+app.UseIpRateLimiting(); // rate limiting must be the first middleware
 
 if (app.Environment.IsDevelopment())
 {
