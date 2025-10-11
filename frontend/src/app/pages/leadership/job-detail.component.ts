@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { ActivatedRoute, RouterModule } from '@angular/router'; // 1. RouterModule must be imported
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LeadershipService } from '../../services/leadership.service';
-import { JobDetail, EmployeeWithVendor } from '../../models';
+import { JobDetail, EmployeeWithVendor, Vendor, ConversationDto } from '../../models';
+import { MessagingService } from '../../services/messaging.service';
+import { ChatModalComponent } from '../chat-modal.component';
 
 // This interface helps in organizing the data for the template
 interface VendorEmployeeGroup {
@@ -12,7 +14,7 @@ interface VendorEmployeeGroup {
 
 @Component({
   standalone: true,
-  imports: [CommonModule, DatePipe, RouterModule], // 2. RouterModule must be in the imports array
+  imports: [CommonModule, DatePipe, RouterModule, ChatModalComponent],
   template: `
     <div *ngIf="job" class="p-6 bg-white rounded-lg shadow space-y-4">
       <div>
@@ -20,22 +22,25 @@ interface VendorEmployeeGroup {
         <p class="text-md text-gray-600">{{ job.country }} - Created by: {{ job.createdBy.firstName }} {{ job.createdBy.lastName }}</p>
         <p class="text-sm text-red-600">Expires on: {{ job.expiryDate | date:'fullDate' }}</p>
       </div>
-
       <div class="pt-4 border-t">
         <h3 class="font-semibold text-lg">Description</h3>
         <p class="mt-1 text-gray-700">{{ job.description }}</p>
       </div>
       <div class="pt-4 border-t">
         <h3 class="font-semibold text-lg">Assigned Vendors ({{ job.assignedVendors.length }})</h3>
-        <ul class="mt-2 space-y-1 list-disc list-inside">
-          <li *ngFor="let vendor of job.assignedVendors">{{ vendor.companyName }} - {{ vendor.status }}</li>
+        <ul class="mt-2 space-y-2">
+          <li *ngFor="let vendor of job.assignedVendors" class="flex justify-between items-center">
+            <span>{{ vendor.companyName }} - {{ vendor.status }}</span>
+            <button (click)="openChatWithVendor(vendor)" 
+                    class="px-3 py-1 text-sm text-white bg-indigo-600 rounded hover:bg-indigo-700">
+              Chat
+            </button>
+          </li>
         </ul>
       </div>
-
       <div class="pt-4 border-t">
         <h3 class="font-semibold text-lg">Submitted Employees ({{ job.submittedEmployees.length }})</h3>
         <div *ngIf="!employeesByVendor.length" class="text-gray-500 mt-2">No employees submitted yet.</div>
-        
         <div *ngFor="let group of employeesByVendor" class="mt-4">
           <h4 class="font-bold text-md text-gray-800 border-b pb-1">{{ group.vendorName }}</h4>
           <ul class="mt-2 space-y-2">
@@ -49,20 +54,24 @@ interface VendorEmployeeGroup {
         </div>
       </div>
     </div>
-    
-    <div *ngIf="isLoading" class="text-center p-8">
-      <p>Loading job details...</p>
-    </div>
+    <div *ngIf="isLoading" class="text-center p-8"><p>Loading job details...</p></div>
+
+    <app-chat-modal *ngIf="selectedConversation" 
+                    [conversation]="selectedConversation" 
+                    (closeModal)="closeChat()">
+    </app-chat-modal>
   `
 })
 export class JobDetailComponent implements OnInit {
   job: JobDetail | null = null;
   isLoading = true;
   employeesByVendor: VendorEmployeeGroup[] = [];
+  selectedConversation: ConversationDto | null = null;
 
   constructor(
     private route: ActivatedRoute,
-    private leadershipService: LeadershipService
+    private leadershipService: LeadershipService,
+    private messagingService: MessagingService
   ) {}
 
   ngOnInit() {
@@ -98,5 +107,21 @@ export class JobDetailComponent implements OnInit {
       vendorName,
       employees
     }));
+  }
+
+  openChatWithVendor(vendor: Vendor): void {
+    if (!this.job) return;
+    this.messagingService.startConversation(this.job.publicId, vendor.publicId).subscribe(response => {
+      this.selectedConversation = {
+        conversationPublicId: response.conversationPublicId,
+        jobTitle: this.job?.title || '',
+        participantPublicId: vendor.publicId,
+        participantName: vendor.companyName
+      };
+    });
+  }
+
+  closeChat(): void {
+    this.selectedConversation = null;
   }
 }

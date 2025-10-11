@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using backend.Hubs;
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
@@ -44,6 +45,8 @@ builder.Services.AddScoped<LeadershipService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<VendorService>();
+builder.Services.AddScoped<MessagingService>();
+builder.Services.AddSignalR();
 
 // Configuring the AWS S3
 var awsCredentials = new BasicAWSCredentials(
@@ -64,6 +67,21 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    // for SignalR
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/chatHub"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
+    // for REST API
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -85,7 +103,8 @@ builder.Services.AddCors(options =>
                           // For production, you would replace this with your actual frontend domain.
                           policy.WithOrigins("http://localhost:4200")
                                 .AllowAnyHeader()
-                                .AllowAnyMethod();
+                                .AllowAnyMethod()
+                                .AllowCredentials();
                       });
 });
 
@@ -147,5 +166,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers(); // Needed to map controller routes
-
+app.MapHub<ChatHub>("/chatHub");
 app.Run();
