@@ -24,12 +24,9 @@ export class AuthService {
    */
 
    //added parameter for captcha
- setupVendor(token: string, password: string, captchaToken: string): Observable<any> {
-  return this.http.post(`${this.apiUrl}/setup-vendor/${token}`, {
-    password,
-    captchaToken
-  });
-}
+setupVendor(token: string, password: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/setup-vendor/${token}`, { password });
+  }
 
 
   logout(): void {
