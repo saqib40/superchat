@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace backend.DTOs
 {
     // --- AUTH DTOs ---
-    public record LoginRequest(string Email, string Password);
+    public record LoginRequest(string Email, string Password, string RecaptchaToken);
 
     // DTO for the vendor to submit their password during account setup
     public record VendorSetPasswordRequest([Required] string Password);
