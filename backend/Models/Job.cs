@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using backend.Enums;
 
 namespace backend.Models
 {
@@ -21,9 +22,10 @@ namespace backend.Models
         public string Country { get; set; } = string.Empty;
 
         // --- NEW PROPERTY ADDED HERE ---
-        [Required]
-        [MaxLength(50)]
-        public string Status { get; set; } = "Open"; // Default status for all new jobs
+        // [Required]
+        // [MaxLength(50)]
+        // public string Status { get; set; } = "Open"; // Default status for all new jobs
+        public JobStatus Status { get; set; } = JobStatus.Open;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime ExpiryDate { get; set; }

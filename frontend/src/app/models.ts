@@ -22,7 +22,11 @@ export interface Employee {
   publicId: string;
   firstName: string;
   lastName: string;
+  email: string;
   jobTitle?: string;
+  phoneNumber?: string;
+  yearsOfExperience?: number;
+  skills?: string;
 }
 
 export interface EmployeeWithVendor extends Employee {
