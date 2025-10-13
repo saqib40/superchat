@@ -1,13 +1,13 @@
 // src/app/pages/leadership/manage-vendors.component.ts
 
+
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { LeadershipService } from '../../services/leadership.service';
 import { Vendor } from '../../models';
 import { COUNTRIES } from '../../constants/countries';
-import { Observable, startWith, map } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -26,28 +26,30 @@ import { MatInputModule } from '@angular/material/input';
     <div class="space-y-6">
       <div class="p-6 bg-white rounded-lg shadow">
         <h2 class="text-xl font-semibold">Invite New Vendor</h2>
-        <form [formGroup]="form" (ngSubmit)="createVendor()" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <input formControlName="companyName" required placeholder="Company Name" class="px-3 py-2 border rounded">
-          <input formControlName="contactEmail" required type="email" placeholder="Contact Email" class="px-3 py-2 border rounded">
-          
+        <form #vendorForm="ngForm" (ngSubmit)="createVendor(vendorForm.value)" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+          <input name="companyName" ngModel required placeholder="Company Name" class="px-3 py-2 border rounded">
+          <input name="contactEmail" ngModel required type="email" placeholder="Contact Email" class="px-3 py-2 border rounded">
+
           <mat-form-field appearance="outline" class="w-full">
             <input
               type="text"
               matInput
-              formControlName="country"
-              [matAutocomplete]="auto"
+              [(ngModel)]="country"
+              name="country"
               required
+              (ngModelChange)="onCountryChange($event)"
+              [matAutocomplete]="auto"
               placeholder="Select or type a country"
               class="px-3 py-2 border rounded"
             >
             <mat-autocomplete #auto="matAutocomplete">
-              <mat-option *ngFor="let country of filteredCountries | async" [value]="country">
-                {{ country }}
+              <mat-option *ngFor="let c of filteredCountries | async" [value]="c">
+                {{ c }}
               </mat-option>
             </mat-autocomplete>
           </mat-form-field>
 
-          <button type="submit" [disabled]="form.invalid" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400 col-span-1 md:col-span-3">Send Invitation</button>
+          <button type="submit" [disabled]="vendorForm.invalid" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400 col-span-1 md:col-span-3">Send Invitation</button>
         </form>
       </div>
 
@@ -83,16 +85,13 @@ export class ManageVendorsComponent implements OnInit {
 
   ngOnInit() {
     this.loadVendors();
-    this.filteredCountries = this.form.get('country')!.valueChanges.pipe(
-      startWith(''),
-      map(value => this.filterCountries(value || ''))
-    );
+    this.filteredCountries = of(this.countries);
   }
 
-  private filterCountries(value: string): string[] {
+  onCountryChange(value: string) {
     const filterValue = value.toLowerCase();
-    return this.countries.filter(country =>
-      country.toLowerCase().includes(filterValue)
+    this.filteredCountries = of(
+      this.countries.filter(c => c.toLowerCase().includes(filterValue))
     );
   }
 
@@ -101,13 +100,13 @@ export class ManageVendorsComponent implements OnInit {
     this.leadershipService.getVendorsByCountry(this.countryFilter).subscribe(data => this.vendors = data);
   }
 
-  createVendor() {
+  createVendor(formData: any) {
     const payload = {
-      companyName: this.form.value.companyName!,
-      contactEmail: this.form.value.contactEmail!,
-      country: this.form.value.country!
+      companyName: formData.companyName,
+      contactEmail: formData.contactEmail,
+      country: this.country
     };
-
+    console.log("Sending payload:", payload);
     this.leadershipService.createVendor(payload).subscribe(() => this.loadVendors());
   }
 
