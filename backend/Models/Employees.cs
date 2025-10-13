@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+// using backend.Enums;
 
 namespace backend.Models
 {
@@ -9,8 +10,11 @@ namespace backend.Models
         public int Id { get; set; }
         public Guid PublicId { get; set; } = Guid.NewGuid();
 
-        // --- ADDED for Soft Deletes ---
         public bool IsActive { get; set; } = true;
+
+        [Required]
+        [MaxLength(256)]
+        public string Email { get; set; } = string.Empty;
 
         [Required]
         [MaxLength(100)]
@@ -20,16 +24,23 @@ namespace backend.Models
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        public int? YearsOfExperience { get; set; }
+
+        public string? Skills { get; set; } // Can be a comma-separated list or JSON string
+
         [MaxLength(100)]
         public string? JobTitle { get; set; }
 
         [MaxLength(1024)]
-        public string? ResumeS3Key { get; set; }
+        public string ResumeS3Key { get; set; } = string.Empty;
 
         // --- NEW PROPERTY ADDED HERE ---
-        [Required]
-        [MaxLength(50)]
-        public string Status { get; set; } = "Submitted"; // Default status for all new employees
+        // [Required]
+        // [MaxLength(50)]
+        // public ApplicationStatus Status { get; set; } = ApplicationStatus.Submitted; // Default status for all new employees
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }

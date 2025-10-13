@@ -15,3 +15,6 @@ p, label, input {
   font-weight: 400; /* Normal */
 }
 
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using backend.Config;
 
@@ -11,9 +12,11 @@ using backend.Config;
 namespace backend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251010121314_Msgs")]
+    partial class Msgs
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -88,11 +91,6 @@ namespace backend.Migrations
                     b.Property<int>("CreatedByUserId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -113,20 +111,12 @@ namespace backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ResumeS3Key")
-                        .IsRequired()
                         .HasMaxLength(1024)
                         .HasColumnType("nvarchar(1024)");
-
-                    b.Property<string>("Skills")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -137,15 +127,9 @@ namespace backend.Migrations
                     b.Property<int>("VendorId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("YearsOfExperience")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedByUserId");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
 
                     b.HasIndex("JobId");
 
@@ -189,9 +173,6 @@ namespace backend.Migrations
                     b.Property<Guid>("PublicId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -205,41 +186,6 @@ namespace backend.Migrations
                         .IsUnique();
 
                     b.ToTable("Jobs");
-                });
-
-            modelBuilder.Entity("backend.Models.JobApplication", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("JobId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("LastUpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("PublicId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.HasIndex("JobId");
-
-                    b.HasIndex("PublicId")
-                        .IsUnique();
-
-                    b.ToTable("JobApplications");
                 });
 
             modelBuilder.Entity("backend.Models.JobVendor", b =>
@@ -371,9 +317,6 @@ namespace backend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddedById");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
 
                     b.HasIndex("PublicId")
                         .IsUnique();
@@ -522,31 +465,12 @@ namespace backend.Migrations
             modelBuilder.Entity("backend.Models.Job", b =>
                 {
                     b.HasOne("backend.Models.User", "CreatedByLeader")
-                        .WithMany("JobsCreated")
+                        .WithMany()
                         .HasForeignKey("CreatedByLeaderId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CreatedByLeader");
-                });
-
-            modelBuilder.Entity("backend.Models.JobApplication", b =>
-                {
-                    b.HasOne("backend.Models.Employee", "Employee")
-                        .WithMany()
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("backend.Models.Job", "Job")
-                        .WithMany()
-                        .HasForeignKey("JobId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Employee");
-
-                    b.Navigation("Job");
                 });
 
             modelBuilder.Entity("backend.Models.JobVendor", b =>
@@ -625,11 +549,6 @@ namespace backend.Migrations
                     b.Navigation("Employees");
 
                     b.Navigation("VendorAssignments");
-                });
-
-            modelBuilder.Entity("backend.Models.User", b =>
-                {
-                    b.Navigation("JobsCreated");
                 });
 
             modelBuilder.Entity("backend.Models.Vendor", b =>

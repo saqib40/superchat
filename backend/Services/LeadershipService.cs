@@ -1,6 +1,7 @@
 using backend.Config;
 using backend.DTOs;
 using backend.Models;
+using backend.Enums;
 using Microsoft.EntityFrameworkCore;
 using Amazon.S3.Model;
 using Amazon.S3;
@@ -22,10 +23,16 @@ namespace backend.Services
 
         public async Task<VendorDto?> CreateVendorAsync(CreateVendorRequest dto, int leaderId)
         {
+            var emailExistsInUsers = await _context.Users.AnyAsync(u => u.Email == dto.ContactEmail);
+            var emailExistsInEmployees = await _context.Employees.IgnoreQueryFilters().AnyAsync(e => e.Email == dto.ContactEmail);
+
+            if (emailExistsInUsers || emailExistsInEmployees)
+            {
+                return null;
+            }
             var vendorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Vendor");
             if (vendorRole == null) return null;
 
-            // Create a User shell with a placeholder password. The vendor will set their own.
             var newUser = new User { Email = dto.ContactEmail, PasswordHash = "SETUP_PENDING", AddedById = leaderId };
             newUser.Roles.Add(vendorRole);
             _context.Users.Add(newUser);
@@ -52,15 +59,25 @@ namespace backend.Services
 
         public async Task<bool> SoftDeleteVendorAsync(Guid publicId)
         {
-            var vendor = await _context.Vendors.IgnoreQueryFilters().FirstOrDefaultAsync(v => v.PublicId == publicId);
+            var vendor = await _context.Vendors
+                .Include(v => v.User)
+                .Include(v => v.Employees)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(v => v.PublicId == publicId);
             if (vendor == null) return false;
-
+            
             vendor.IsActive = false;
-            if (vendor.UserId.HasValue)
+            
+            if (vendor.User != null)
             {
-                var user = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.Id == vendor.UserId);
-                if (user != null) user.IsActive = false;
+                vendor.User.IsActive = false;
             }
+            
+            foreach (var employee in vendor.Employees)
+            {
+                employee.IsActive = false;
+            }
+            
             await _context.SaveChangesAsync();
             return true;
         }
@@ -80,6 +97,7 @@ namespace backend.Services
                 Country = dto.Country,
                 ExpiryDate = dto.ExpiryDate,
                 CreatedByLeaderId = leaderId,
+                Status = JobStatus.Open
             };
 
             foreach (var vendor in assignedVendors)
@@ -134,17 +152,21 @@ namespace backend.Services
         public async Task<EmployeeDetailDto?> GetEmployeeDetailsAsync(Guid publicId)
         {
             var employee = await _context.Employees
-                .Include(e => e.Vendor) // Include Vendor to get the company name
+                .Include(e => e.Vendor)
                 .Where(e => e.PublicId == publicId)
-                .Select(e => new
+                .Select(e => new 
                 {
                     e.PublicId,
                     e.FirstName,
                     e.LastName,
                     e.JobTitle,
+                    e.Email,
+                    e.PhoneNumber,
+                    e.YearsOfExperience,
+                    e.Skills,
                     e.CreatedAt,
                     e.Vendor.CompanyName,
-                    e.ResumeS3Key // We need the S3 key to generate the URL
+                    e.ResumeS3Key
                 })
                 .FirstOrDefaultAsync();
 
@@ -157,63 +179,110 @@ namespace backend.Services
                 {
                     BucketName = Environment.GetEnvironmentVariable("S3_BUCKET"),
                     Key = employee.ResumeS3Key,
-                    Expires = DateTime.UtcNow.AddMinutes(15) // The URL will be valid for 15 minutes
+                    Expires = DateTime.UtcNow.AddMinutes(15)
                 };
                 resumeUrl = _s3Client.GetPreSignedURL(request);
             }
-
             return new EmployeeDetailDto(
                 employee.PublicId,
                 employee.FirstName,
                 employee.LastName,
                 employee.JobTitle,
+                employee.Email,
+                employee.PhoneNumber,
+                employee.YearsOfExperience,
+                employee.Skills,
                 employee.CreatedAt,
                 employee.CompanyName,
                 resumeUrl
             );
         }
-        // --- NEW METHOD FOR UPDATING EMPLOYEE STATUS ---
-        public async Task<bool> UpdateEmployeeStatusAsync(Guid publicId, string newStatus, int leaderId)
+
+        public async Task<bool> SoftDeleteJobAsync(Guid publicId)
         {
-            // 1. Validate the incoming status against the list of valid statuses a leader can set.
-            var validLeaderStatuses = new List<string> { "Under Review", "Shortlisted", "Hired", "Rejected" };
-            if (!validLeaderStatuses.Contains(newStatus))
-            {
-                return false; // The status is not a valid one.
-            }
+            var job = await _context.Jobs
+                .Include(j => j.VendorAssignments)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(j => j.PublicId == publicId);
 
-            // 2. Find the employee in the database and include their related Job.
-            // We need the Job object to update its status if the employee is hired.
-            var employee = await _context.Employees
-                .Include(e => e.Job) // Eagerly load the related Job
-                .FirstOrDefaultAsync(e => e.PublicId == publicId);
+            if (job == null) return false;
 
-            if (employee == null)
-            {
-                return false; // The employee was not found.
-            }
+            job.IsActive = false;
 
-            // 3. Update the employee's status and the audit fields.
-            employee.Status = newStatus;
-            employee.UpdatedByUserId = leaderId;
-            employee.UpdatedAt = DateTime.UtcNow;
-
-            // 4. Handle the "Hired" side-effect based on our design.
-            if (newStatus == "Hired")
-            {
-                // If the employee is hired, we automatically close the associated job.
-                // This is a great example of business logic automation.
-                if (employee.Job != null)
-                {
-                    employee.Job.Status = "Closed";
-                }
-            }
-
-            // 5. Save all the changes (to both the Employee and potentially the Job) to the database.
             await _context.SaveChangesAsync();
+            return true;
+        }
 
+        /// <summary>
+        /// Retrieves all applications for a specific job that match a given status.
+        /// </summary>
+        public async Task<IEnumerable<JobApplicationDto>> GetApplicationsByStatusForJobAsync(Guid jobPublicId, ApplicationStatus status, int leaderId)
+        {
+            return await _context.JobApplications
+                .Where(app => app.Job.PublicId == jobPublicId &&
+                            app.Status == status &&
+                            app.Job.CreatedByLeaderId == leaderId) // Security check
+                .Select(app => new JobApplicationDto(
+                    app.PublicId,
+                    app.Status,
+                    app.LastUpdatedAt,
+                    app.Employee.PublicId,
+                    app.Employee.FirstName,
+                    app.Employee.LastName,
+                    app.Employee.Email,
+                    app.Job.PublicId,
+                    app.Job.Title
+                ))
+                .ToListAsync();
+        }
+        /// <summary>
+        /// Retrieves all applications with a 'Hired' status for all jobs created by a specific leader.
+        /// </summary>
+        public async Task<IEnumerable<JobApplicationDto>> GetHiredApplicationsForLeaderAsync(int leaderId)
+        {
+            return await _context.JobApplications
+                .Where(app => app.Job.CreatedByLeaderId == leaderId &&
+                            app.Status == ApplicationStatus.Hired)
+                .Select(app => new JobApplicationDto(
+                    app.PublicId,
+                    app.Status,
+                    app.LastUpdatedAt,
+                    app.Employee.PublicId,
+                    app.Employee.FirstName,
+                    app.Employee.LastName,
+                    app.Employee.Email,
+                    app.Job.PublicId,
+                    app.Job.Title
+                ))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Updates the status of a single JobApplication.
+        /// </summary>
+        public async Task<bool> UpdateApplicationStatusAsync(Guid applicationPublicId, ApplicationStatus newStatus, int leaderId)
+        {
+            var application = await _context.JobApplications
+                .Include(app => app.Job)
+                .FirstOrDefaultAsync(app => app.PublicId == applicationPublicId);
+
+            if (application == null || application.Job.CreatedByLeaderId != leaderId)
+            {
+                // Application not found or the leader is not authorized for this job.
+                return false;
+            }
+
+            application.Status = newStatus;
+            application.LastUpdatedAt = DateTime.UtcNow;
+
+            // Side-effect: If an applicant is hired, automatically close the job.
+            if (newStatus == ApplicationStatus.Hired)
+            {
+                application.Job.Status = JobStatus.Closed;
+            }
+
+            await _context.SaveChangesAsync();
             return true;
         }
     }
 }
-
