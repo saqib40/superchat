@@ -1,15 +1,17 @@
-// src/app/pages/login.component.ts
-import { MessagingService } from '../services/messaging.service';
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-
+import { NgxCaptchaModule } from 'ngx-captcha';
+import { environment } from '../../environments/environment';
+ 
+declare const grecaptcha: any;
+ 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, NgxCaptchaModule],
   template: `
     <div class="flex items-center justify-center min-h-screen bg-gray-100">
       <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg">
@@ -37,45 +39,62 @@ export class LoginComponent {
   loginForm: FormGroup;
   errorMessage = '';
   isSubmitting = false;
-
-  constructor(private fb: FormBuilder, private authService: AuthService, private router: Router, private messagingService: MessagingService) {
+ 
+  constructor(
+    private fb: FormBuilder,
+    private authService: AuthService,
+    private router: Router
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
   }
-
+ 
   onSubmit() {
     if (this.loginForm.invalid) return;
     this.isSubmitting = true;
     this.errorMessage = '';
-
-    this.authService.login(this.loginForm.value as any).subscribe({
-      next: (res) => {
-        localStorage.setItem('token', res.token);
-        this.messagingService.startConnection();
-        const roles = this.authService.getUserRole();
-        // Determine the primary role for navigation
-        const primaryRole = Array.isArray(roles) ? roles[0] : roles;
-        
-        console.log('Decoded Primary Role:', primaryRole);
-
-        // Use the clear if/else if navigation logic
-        if (primaryRole === 'Admin') {
-          this.router.navigate(['/admin/dashboard']);
-        } else if (primaryRole === 'Leadership') {
-          this.router.navigate(['/leadership/dashboard']);
-        } else if (primaryRole === 'Vendor') {
-          this.router.navigate(['/vendor/dashboard']);
-        } else {
+ 
+    grecaptcha.ready(() => {
+      grecaptcha.execute(environment.recaptchaSiteKey, { action: 'login' })
+        .then((token: string) => {
+          console.log("Generated reCAPTCHA token:", token);
+ 
+          const payload = {
+            ...this.loginForm.value,
+            recaptchaToken: token
+          };
+ 
+          this.authService.login(payload).subscribe({
+            next: (res) => {
+              localStorage.setItem('token', res.token);
+              const roles = this.authService.getUserRole();
+              const primaryRole = Array.isArray(roles) ? roles[0] : roles;
+              console.log('Decoded Primary Role:', primaryRole);
+ 
+              if (primaryRole === 'Admin') {
+                this.router.navigate(['/admin/dashboard']);
+              } else if (primaryRole === 'Leadership') {
+                this.router.navigate(['/leadership/dashboard']);
+              } else if (primaryRole === 'Vendor') {
+                this.router.navigate(['/vendor/dashboard']);
+              } else {
+                this.isSubmitting = false;
+                this.errorMessage = 'Invalid role received from token.';
+              }
+            },
+            error: () => {
+              this.errorMessage = 'Invalid email or password';
+              this.isSubmitting = false;
+            }
+          });
+        })
+        .catch((error: any) => {
+          this.errorMessage = 'CAPTCHA verification failed.';
           this.isSubmitting = false;
-          this.errorMessage = 'Invalid role received from token.';
-        }
-      },
-      error: () => {
-        this.errorMessage = 'Invalid email or password';
-        this.isSubmitting = false;
-      }
+          console.error('reCAPTCHA error:', error);
+        });
     });
   }
 }

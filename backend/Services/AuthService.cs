@@ -13,26 +13,37 @@ namespace backend.Services
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly RecaptchaService _recaptcha;
 
-        public AuthService(ApplicationDbContext context, IConfiguration configuration)
+        public AuthService(ApplicationDbContext context, IConfiguration configuration, RecaptchaService recaptcha)
         {
             _context = context;
             _configuration = configuration;
+            _recaptcha = recaptcha;
         }
 
-        public async Task<string?> LoginAsync(string email, string password)
+        public async Task<string?> LoginAsync(string email, string password, string recaptchaToken)
         {
+            // reCAPTCHA already verified in controller — no need to check again
+          
             var user = await _context.Users.Include(u => u.Roles).FirstOrDefaultAsync(u => u.Email == email);
+            Console.WriteLine($"Attempting login for: {email}");
+            Console.WriteLine($"User found: {user != null}");
+            Console.WriteLine($"Password valid: {PasswordHelper.Verify(password, user?.PasswordHash)}");
             if (user == null || !PasswordHelper.Verify(password, user.PasswordHash))
             {
+                Console.WriteLine("User not found or password mismatch.");
                 return null;
             }
+
+            Console.WriteLine("Login successful. Generating token...");
             return GenerateJwtToken(user);
         }
-        
+
         // This method is called when the vendor submits their password after clicking the email link.
         public async Task<bool> SetupVendorAccountAsync(Guid token, string password)
         {
+           
             var vendor = await _context.Vendors.Include(v => v.User)
                 .FirstOrDefaultAsync(v => v.VerificationToken == token && v.TokenExpiry > DateTime.UtcNow);
 
