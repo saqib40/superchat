@@ -57,13 +57,12 @@ class Program
         Console.WriteLine("--- Inbuilt Password Hashing ---");
 
         // Call the function with a sample password
-        string hasheg = HashInbuilt("hlo123");
+
+        string hasheg = HashInbuilt("NewLeaderPass123!");
         Console.WriteLine(hasheg);
-        hasheg = HashInbuilt("hii12345");
+        hasheg = HashInbuilt("NewVendorPass123!");
         Console.WriteLine(hasheg);
-        hasheg = HashInbuilt("12345");
-        Console.WriteLine(hasheg);
-        hasheg = HashInbuilt("1234");
+        hasheg = HashInbuilt("AnotherVendor123!");
         Console.WriteLine(hasheg);
     }
 }

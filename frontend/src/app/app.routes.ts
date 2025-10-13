@@ -20,8 +20,8 @@ export const routes: Routes = [
       { path: 'leadership/vendors', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/leadership/manage-vendors.component').then(c => c.ManageVendorsComponent) },
       { path: 'leadership/jobs', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/leadership/manage-jobs.component').then(c => c.ManageJobsComponent) },
       { path: 'leadership/jobs/:id', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/leadership/job-detail.component').then(c => c.JobDetailComponent) },
+      { path: 'leadership/hired', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/leadership/hired-candidates.component').then(c => c.HiredCandidatesComponent) },
       { path: 'leadership/employees/:id', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/leadership/employee-detail.component').then(c => c.EmployeeDetailComponent) },
-      // FIX: Added Conversations Route for Leadership
       { path: 'leadership/conversations', canActivate: [authGuard], data: { expectedRole: 'Leadership' }, loadComponent: () => import('./pages/conversations.component').then(c => c.ConversationsComponent) },
 
       // Vendor Routes

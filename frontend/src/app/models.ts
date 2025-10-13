@@ -1,5 +1,3 @@
-// src/app/models.ts
-
 // Represents a user (Admin or Leadership)
 export interface User {
   publicId: string;
@@ -46,6 +44,7 @@ export interface Job {
   createdAt: string; // ISO date string
   expiryDate: string; // ISO date string
   daysRemaining: number;
+  status: string;
 }
 
 // Represents the detailed view of a job
@@ -76,3 +75,35 @@ export interface ConversationDto {
   lastMessage?: string;
   lastMessageTimestamp?: string; // ISO date string
 }
+
+export interface JobApplicationDto {
+  applicationPublicId: string;
+  status: string; // e.g., "Submitted", "UnderReview"
+  lastUpdatedAt: string; // ISO date string
+  feedback?: string;
+  employeePublicId: string;
+  employeeFirstName: string;
+  employeeLastName: string;
+  employeeEmail: string;
+  jobPublicId: string;
+  jobTitle: string;
+}
+
+export interface AdminDashboardStatsDto {
+  activeJobCount: number;
+  activeVendorCount: number;
+  totalApplications: number;
+  hiredApplications: number;
+  recentlyAddedLeaders: User[];
+  recentlyAddedVendors: Vendor[];
+}
+
+export interface VendorJobDetailDto {
+  jobPublicId: string;
+  title: string;
+  description: string;
+  country: string;
+  expiryDate: string;
+  submittedApplications: JobApplicationDto[];
+}
+

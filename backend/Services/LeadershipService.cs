@@ -136,6 +136,7 @@ namespace backend.Services
                     j.Description,
                     j.Country,
                     j.ExpiryDate,
+                    j.Status,
                     new UserDto(j.CreatedByLeader.PublicId, j.CreatedByLeader.Email, j.CreatedByLeader.FirstName, j.CreatedByLeader.LastName),
                     j.VendorAssignments.Select(va => new VendorDto(va.Vendor.PublicId, va.Vendor.CompanyName, va.Vendor.ContactEmail, va.Vendor.Country, va.Vendor.Status)).ToList(),
                     j.Employees.Select(e => new EmployeeWithVendorDto(
@@ -208,24 +209,25 @@ namespace backend.Services
             if (job == null) return false;
 
             job.IsActive = false;
-
             await _context.SaveChangesAsync();
             return true;
         }
 
-        /// <summary>
-        /// Retrieves all applications for a specific job that match a given status.
-        /// </summary>
-        public async Task<IEnumerable<JobApplicationDto>> GetApplicationsByStatusForJobAsync(Guid jobPublicId, ApplicationStatus status, int leaderId)
+        public async Task<IEnumerable<JobApplicationDto>> GetApplicationsForJobAsync(Guid jobPublicId, int leaderId, ApplicationStatus? statusFilter = null)
         {
-            return await _context.JobApplications
-                .Where(app => app.Job.PublicId == jobPublicId &&
-                            app.Status == status &&
-                            app.Job.CreatedByLeaderId == leaderId) // Security check
-                .Select(app => new JobApplicationDto(
+            var query = _context.JobApplications
+                .Where(app => app.Job.PublicId == jobPublicId && app.Job.CreatedByLeaderId == leaderId);
+
+            if (statusFilter.HasValue)
+            {
+                query = query.Where(app => app.Status == statusFilter.Value);
+            }
+
+            return await query.Select(app => new JobApplicationDto(
                     app.PublicId,
                     app.Status,
                     app.LastUpdatedAt,
+                    app.Feedback,
                     app.Employee.PublicId,
                     app.Employee.FirstName,
                     app.Employee.LastName,
@@ -235,18 +237,17 @@ namespace backend.Services
                 ))
                 .ToListAsync();
         }
-        /// <summary>
-        /// Retrieves all applications with a 'Hired' status for all jobs created by a specific leader.
-        /// </summary>
+        
         public async Task<IEnumerable<JobApplicationDto>> GetHiredApplicationsForLeaderAsync(int leaderId)
         {
             return await _context.JobApplications
                 .Where(app => app.Job.CreatedByLeaderId == leaderId &&
-                            app.Status == ApplicationStatus.Hired)
+                               app.Status == ApplicationStatus.Hired)
                 .Select(app => new JobApplicationDto(
                     app.PublicId,
                     app.Status,
                     app.LastUpdatedAt,
+                    app.Feedback,
                     app.Employee.PublicId,
                     app.Employee.FirstName,
                     app.Employee.LastName,
@@ -257,9 +258,6 @@ namespace backend.Services
                 .ToListAsync();
         }
 
-        /// <summary>
-        /// Updates the status of a single JobApplication.
-        /// </summary>
         public async Task<bool> UpdateApplicationStatusAsync(Guid applicationPublicId, ApplicationStatus newStatus, int leaderId)
         {
             var application = await _context.JobApplications
@@ -268,19 +266,49 @@ namespace backend.Services
 
             if (application == null || application.Job.CreatedByLeaderId != leaderId)
             {
-                // Application not found or the leader is not authorized for this job.
                 return false;
             }
 
             application.Status = newStatus;
             application.LastUpdatedAt = DateTime.UtcNow;
 
-            // Side-effect: If an applicant is hired, automatically close the job.
             if (newStatus == ApplicationStatus.Hired)
             {
                 application.Job.Status = JobStatus.Closed;
             }
 
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> AddFeedbackToApplicationAsync(Guid applicationPublicId, string feedback, int leaderId)
+        {
+            var application = await _context.JobApplications
+                .Include(app => app.Job)
+                .FirstOrDefaultAsync(app => app.PublicId == applicationPublicId);
+
+            if (application == null || application.Job.CreatedByLeaderId != leaderId)
+            {
+                return false;
+            }
+
+            application.Feedback = feedback;
+            application.LastUpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateJobStatusAsync(Guid jobPublicId, JobStatus newStatus, int leaderId)
+        {
+            var job = await _context.Jobs
+                .FirstOrDefaultAsync(j => j.PublicId == jobPublicId);
+
+            if (job == null || job.CreatedByLeaderId != leaderId)
+            {
+                return false;
+            }
+
+            job.Status = newStatus;
             await _context.SaveChangesAsync();
             return true;
         }

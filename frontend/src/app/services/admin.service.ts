@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { User } from '../models';
+import { User, Job, Vendor, AdminDashboardStatsDto } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
@@ -22,5 +22,17 @@ export class AdminService {
 
   deleteLeader(publicId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/leaders/${publicId}`);
+  }
+
+  getDashboardStats(): Observable<AdminDashboardStatsDto> {
+    return this.http.get<AdminDashboardStatsDto>(`${this.apiUrl}/dashboard/stats`);
+  }
+
+  getAllJobs(): Observable<Job[]> {
+    return this.http.get<Job[]>(`${this.apiUrl}/jobs`);
+  }
+
+  getAllVendors(): Observable<Vendor[]> {
+    return this.http.get<Vendor[]>(`${this.apiUrl}/vendors`);
   }
 }

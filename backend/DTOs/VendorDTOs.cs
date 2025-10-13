@@ -9,6 +9,15 @@ namespace backend.DTOs
         string Country,
         string Status
     );
+    // Provides a detailed view for a vendor of a single job, including the status of their submitted candidates.
+    public record VendorJobDetailDto(
+        Guid JobPublicId,
+        string Title,
+        string Description,
+        string Country,
+        DateTime ExpiryDate,
+        List<JobApplicationDto> SubmittedApplications // A list of their candidates and their statuses
+    );
     public class CreateEmployeeRequest
     {
         [Required] public Guid JobPublicId { get; set; }
