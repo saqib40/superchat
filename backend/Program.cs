@@ -57,6 +57,8 @@ builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<VendorService>();
 builder.Services.AddScoped<MessagingService>();
+builder.Services.AddScoped<RecaptchaService>();
+builder.Services.AddHttpClient();
 builder.Services.AddSignalR();
 
 // Configuring the AWS S3
