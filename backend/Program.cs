@@ -1,16 +1,14 @@
-using Amazon;
-using Amazon.Runtime;
-using Amazon.S3;
+using DotNetEnv;
 using backend.Config;
 using backend.Services;
-using DotNetEnv;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Amazon;
+using Amazon.S3;
+using Amazon.Runtime;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
-using System;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
@@ -22,22 +20,15 @@ var builder = WebApplication.CreateBuilder(args);
 // --- CORS policy name ---
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
-//var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
-//var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
-//var dbName = Environment.GetEnvironmentVariable("DB_NAME");
-//var dbUser = Environment.GetEnvironmentVariable("DB_USER");
-//var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
-//var connectionString = $"Server={dbHost},{dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
+var dbHost = Environment.GetEnvironmentVariable("DB_HOST");
+var dbPort = Environment.GetEnvironmentVariable("DB_PORT");
+var dbName = Environment.GetEnvironmentVariable("DB_NAME");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER");
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD");
+var connectionString = $"Server={dbHost},{dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};TrustServerCertificate=True;";
 
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseSqlServer(connectionString));
-
-var conn = builder.Configuration.GetConnectionString("DefaultConnection");
-
-Console.WriteLine($"The connectionString ---> {conn}");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(conn));
-
+    options.UseSqlServer(connectionString));
 
 var emailConfig = new EmailConfig
 {
@@ -53,11 +44,6 @@ builder.Services.AddScoped<LeadershipService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<EmailService>();
 builder.Services.AddScoped<VendorService>();
-
-// Add Captcha Service
-
-builder.Services.AddHttpClient(); 
-builder.Services.AddScoped<RecaptchaService>();
 
 // Configuring the AWS S3
 var awsCredentials = new BasicAWSCredentials(
