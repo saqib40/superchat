@@ -10,13 +10,16 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  login(data: { email: string; password: string }): Observable<{ token: string }> {
-    return this.http.post<{ token: string }>(`${this.apiUrl}/login`, data);
-  }
+  //added parameter for captcha
+
+  login(data: { email: string; password: string; captchaToken: string }): Observable<{ token: string }> {
+  return this.http.post<{ token: string }>(`${this.apiUrl}/login`, data);
+}
 
   setupVendor(token: string, password: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/setup-vendor/${token}`, { password });
   }
+
 
   logout(): void {
     localStorage.removeItem('token');

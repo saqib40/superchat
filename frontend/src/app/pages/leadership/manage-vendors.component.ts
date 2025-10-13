@@ -4,8 +4,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { LeadershipService } from '../../services/leadership.service';
 import { Vendor } from '../../models';
 import { COUNTRIES } from '../../constants/countries';
-import { Observable, startWith, map } from 'rxjs';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Observable, of } from 'rxjs';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -15,7 +14,6 @@ import { MatInputModule } from '@angular/material/input';
   imports: [
     CommonModule,
     FormsModule,
-    ReactiveFormsModule,
     MatAutocompleteModule,
     MatFormFieldModule,
     MatInputModule
@@ -70,23 +68,20 @@ export class ManageVendorsComponent implements OnInit {
   vendors: Vendor[] = [];
   countryFilter: string = 'United States'; // FIX: Use full country name for the default filter
   countries = COUNTRIES;
-  countryControl = new FormControl('');
+  country: string = '';
   filteredCountries!: Observable<string[]>;
 
   constructor(private leadershipService: LeadershipService) {}
 
   ngOnInit() {
     this.loadVendors();
-    this.filteredCountries = this.countryControl.valueChanges.pipe(
-      startWith(''),
-      map(value => this.filterCountries(value || ''))
-    );
+    this.filteredCountries = of(this.countries);
   }
 
   private filterCountries(value: string): string[] {
     const filterValue = value.toLowerCase();
-    return this.countries.filter(country =>
-      country.toLowerCase().includes(filterValue)
+    this.filteredCountries = of(
+      this.countries.filter(c => c.toLowerCase().includes(filterValue))
     );
   }
 
