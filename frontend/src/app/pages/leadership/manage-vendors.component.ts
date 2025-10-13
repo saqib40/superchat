@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
   standalone: true,
   imports: [
     CommonModule,
+    ReactiveFormsModule,
     FormsModule,
     MatAutocompleteModule,
     MatFormFieldModule,
@@ -69,10 +70,15 @@ import { MatInputModule } from '@angular/material/input';
   `
 })
 export class ManageVendorsComponent implements OnInit {
+  form = new FormGroup({
+    companyName: new FormControl('', Validators.required),
+    contactEmail: new FormControl('', [Validators.required, Validators.email]),
+    country: new FormControl('', Validators.required)
+  });
+
   vendors: Vendor[] = [];
   countryFilter: string = 'India';
   countries = COUNTRIES;
-  country: string = '';
   filteredCountries!: Observable<string[]>;
 
   constructor(private leadershipService: LeadershipService) {}
