@@ -11,20 +11,21 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   template: `
-    <div class="flex items-center justify-center min-h-screen bg-gray-50">
-      <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
-        <h2 class="text-2xl font-bold text-center text-gray-900">Sign in to your account</h2>
+    <div class="flex items-center justify-center min-h-screen bg-gray-100">
+      <div class="w-full max-w-md p-8 space-y-6 bg-white rounded-2xl shadow-lg">
+        <h2 class="text-3xl font-extrabold text-center text-gray-900">Sign in to your account</h2>
         <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="space-y-6">
           <div>
             <label for="email" class="text-sm font-medium text-gray-700">Email</label>
-            <input id="email" type="email" formControlName="email" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <input id="email" type="email" formControlName="email" required class="w-full px-4 py-2 mt-1 bg-white border-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
           </div>
           <div>
             <label for="password" class="text-sm font-medium text-gray-700">Password</label>
-            <input id="password" type="password" formControlName="password" required class="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+            <input id="password" type="password" formControlName="password" required class="w-full px-4 py-2 mt-1 bg-white border-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
           </div>
           <p *ngIf="errorMessage" class="text-sm text-red-600">{{ errorMessage }}</p>
-          <button type="submit" [disabled]="loginForm.invalid || isSubmitting" class="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400">
+          <button type="submit" [disabled]="loginForm.invalid || isSubmitting" 
+                  class="w-full px-4 py-3 font-semibold text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105 disabled:bg-gray-400 disabled:scale-100">
             {{ isSubmitting ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>

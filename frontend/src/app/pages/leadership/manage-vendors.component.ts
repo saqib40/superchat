@@ -21,23 +21,22 @@ import { MatInputModule } from '@angular/material/input';
     MatInputModule
   ],
   template: `
-    <div class="space-y-6">
-      <div class="p-6 bg-white rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Invite New Vendor</h2>
-        <form #vendorForm="ngForm" (ngSubmit)="createVendor(vendorForm)" class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <input name="companyName" ngModel required placeholder="Company Name" class="px-3 py-2 border rounded">
-          <input name="contactEmail" ngModel required type="email" placeholder="Contact Email" class="px-3 py-2 border rounded">
+    <div class="space-y-8">
+      <div class="p-8 bg-white rounded-2xl shadow-lg">
+        <h2 class="text-2xl font-bold text-gray-800">Invite New Vendor</h2>
+        <form #vendorForm="ngForm" (ngSubmit)="createVendor(vendorForm)" class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+          <input name="companyName" ngModel required placeholder="Company Name" class="w-full px-4 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+          <input name="contactEmail" ngModel required type="email" placeholder="Contact Email" class="w-full px-4 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
 
           <mat-form-field appearance="outline" class="w-full">
-            <!-- FIX: Removed name="country" and ngModel to resolve conflict -->
+            <mat-label>Country</mat-label>
             <input
               type="text"
               matInput
               [formControl]="countryControl"
               [matAutocomplete]="auto"
               required
-              placeholder="Select or type a country"
-              class="px-3 py-2 border rounded"
+              class="w-full rounded-lg"
             >
             <mat-autocomplete #auto="matAutocomplete">
               <mat-option *ngFor="let country of filteredCountries | async" [value]="country">
@@ -46,20 +45,20 @@ import { MatInputModule } from '@angular/material/input';
             </mat-autocomplete>
           </mat-form-field>
 
-          <button type="submit" [disabled]="vendorForm.invalid || !countryControl.value" class="px-4 py-2 text-white bg-blue-600 rounded hover:bg-blue-700 disabled:bg-gray-400 col-span-1 md:col-span-3">Send Invitation</button>
+          <button type="submit" [disabled]="vendorForm.invalid || !countryControl.value" class="w-full md:col-span-3 px-4 py-3 font-semibold text-white bg-blue-600 rounded-md shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105 disabled:bg-gray-400 disabled:scale-100">Send Invitation</button>
         </form>
       </div>
 
-      <div class="p-6 bg-white rounded-lg shadow">
-        <h2 class="text-xl font-semibold">Manage Vendors</h2>
-        <input [(ngModel)]="countryFilter" (ngModelChange)="loadVendors()" placeholder="Filter by Country..." class="w-full md:w-1/3 my-4 px-3 py-2 border rounded">
-        <ul class="mt-4 space-y-2">
-          <li *ngFor="let vendor of vendors" class="flex justify-between items-center p-3 bg-gray-50 rounded">
+      <div class="p-8 bg-white rounded-2xl shadow-lg">
+        <h2 class="text-2xl font-bold text-gray-800">Manage Vendors</h2>
+        <input [(ngModel)]="countryFilter" (ngModelChange)="loadVendors()" placeholder="Filter by Country..." class="w-full md:w-1/3 my-4 px-4 py-2 bg-white border-2 border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition">
+        <ul class="mt-4 space-y-3">
+          <li *ngFor="let vendor of vendors" class="flex justify-between items-center p-4 bg-gray-50 rounded-xl border border-gray-200/80">
             <div>
-              <p class="font-semibold">{{ vendor.companyName }} ({{vendor.country}})</p>
+              <p class="font-semibold text-gray-900">{{ vendor.companyName }} ({{vendor.country}})</p>
               <p class="text-sm text-gray-600">{{ vendor.contactEmail }} - <span class="font-medium">{{ vendor.status }}</span></p>
             </div>
-            <button (click)="deleteVendor(vendor)" class="px-3 py-1 text-sm text-white bg-red-500 rounded hover:bg-red-600">Delete</button>
+            <button (click)="deleteVendor(vendor)" class="px-3 py-1 text-sm font-semibold text-white bg-red-500 rounded-md hover:bg-red-600 transition-all">Delete</button>
           </li>
         </ul>
       </div>
