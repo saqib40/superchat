@@ -11,6 +11,7 @@ using System.Text;
 using Microsoft.OpenApi.Models;
 using backend.Hubs;
 using AspNetCoreRateLimit;
+using System.Text.Json.Serialization;
 
 if (Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER") != "true")
 {
@@ -121,7 +122,12 @@ builder.Services.AddCors(options =>
                       });
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    // This tells the serializer to convert enums to their string names (e.g., "Submitted")
+    // instead of their integer values (e.g., 0).
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {

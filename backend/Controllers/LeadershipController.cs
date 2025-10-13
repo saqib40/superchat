@@ -82,51 +82,8 @@ namespace backend.Controllers
             var employee = await _leadershipService.GetEmployeeDetailsAsync(publicId);
             if (employee == null) return NotFound();
             return Ok(employee);
-
         }
-        /// <summary>
-        /// Updates the status of a specific candidate's application for a job.
-        /// </summary>
-        [HttpPatch("applications/{applicationPublicId:guid}/status")]
-        public async Task<IActionResult> UpdateApplicationStatus(Guid applicationPublicId, [FromBody] UpdateApplicationStatusRequest dto)
-        {
-            var success = await _leadershipService.UpdateApplicationStatusAsync(
-                applicationPublicId,
-                dto.NewStatus,
-                GetCurrentUserId()
-            );
-
-            if (!success)
-            {
-                return BadRequest("Could not update status. The application may not exist or you may not be authorized.");
-            }
-            return Ok(new { message = "Status updated successfully." });
-        }
-        /// <summary>
-        /// Gets all candidates for a specific job who are scheduled for an interview.
-        /// </summary>
-        [HttpGet("jobs/{jobPublicId:guid}/applications/scheduled")]
-        public async Task<IActionResult> GetScheduledApplicationsForJob(Guid jobPublicId)
-        {
-            var applications = await _leadershipService.GetApplicationsByStatusForJobAsync(
-                jobPublicId, 
-                ApplicationStatus.ScheduledForInterview, 
-                GetCurrentUserId()
-            );
-            return Ok(applications);
-        }
-
-        /// <summary>
-        /// Gets a global list of all candidates hired by the current leader across all their jobs.
-        /// </summary>
-        [HttpGet("applications/hired")]
-        public async Task<IActionResult> GetHiredApplications()
-        {
-            var applications = await _leadershipService.GetHiredApplicationsForLeaderAsync(GetCurrentUserId());
-            return Ok(applications);
-        }
-
-        // --- Soft Delete a Job ---
+        
         [HttpDelete("jobs/{publicId:guid}")]
         public async Task<IActionResult> SoftDeleteJob(Guid publicId)
         {
@@ -134,6 +91,43 @@ namespace backend.Controllers
             if (!success) return NotFound();
             return NoContent();
         }
+
+        [HttpGet("jobs/{jobPublicId:guid}/applications")]
+        public async Task<IActionResult> GetApplicationsForJob(Guid jobPublicId, [FromQuery] ApplicationStatus? status)
+        {
+            var applications = await _leadershipService.GetApplicationsForJobAsync(jobPublicId, GetCurrentUserId(), status);
+            return Ok(applications);
+        }
+
+        [HttpGet("applications/hired")]
+        public async Task<IActionResult> GetHiredApplications()
+        {
+            var applications = await _leadershipService.GetHiredApplicationsForLeaderAsync(GetCurrentUserId());
+            return Ok(applications);
+        }
+
+        [HttpPatch("applications/{applicationPublicId:guid}/status")]
+        public async Task<IActionResult> UpdateApplicationStatus(Guid applicationPublicId, [FromBody] UpdateApplicationStatusRequest dto)
+        {
+            var success = await _leadershipService.UpdateApplicationStatusAsync(applicationPublicId, dto.NewStatus, GetCurrentUserId());
+            if (!success) return BadRequest("Could not update status.");
+            return Ok(new { message = "Status updated successfully." });
+        }
+
+        [HttpPatch("jobs/{jobPublicId:guid}/status")]
+        public async Task<IActionResult> UpdateJobStatus(Guid jobPublicId, [FromBody] UpdateJobStatusRequest dto)
+        {
+            var success = await _leadershipService.UpdateJobStatusAsync(jobPublicId, dto.NewStatus, GetCurrentUserId());
+            if (!success) return BadRequest("Could not update job status.");
+            return Ok(new { message = "Job status updated successfully." });
+        }
+
+        [HttpPost("applications/{applicationPublicId:guid}/notes")]
+        public async Task<IActionResult> AddApplicationNotes(Guid applicationPublicId, [FromBody] AddApplicationNoteRequest dto)
+        {
+            var success = await _leadershipService.AddFeedbackToApplicationAsync(applicationPublicId, dto.Feedback, GetCurrentUserId());
+            if (!success) return BadRequest("Could not add notes.");
+            return Ok(new { message = "Notes added successfully." });
+        }
     }
 }
-

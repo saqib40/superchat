@@ -24,6 +24,7 @@ namespace backend.DTOs
         string Description,
         string Country,
         DateTime ExpiryDate,
+        JobStatus Status,
         UserDto CreatedBy,
         List<VendorDto> AssignedVendors,
         List<EmployeeWithVendorDto> SubmittedEmployees
@@ -45,6 +46,7 @@ namespace backend.DTOs
         Guid ApplicationPublicId,
         ApplicationStatus Status,
         DateTime LastUpdatedAt,
+        string? Feedback, // Include new field
         Guid EmployeePublicId,
         string EmployeeFirstName,
         string EmployeeLastName,
@@ -59,5 +61,8 @@ namespace backend.DTOs
     // Represents the request body for updating a job's status.
     public record UpdateJobStatusRequest(
         [Required] JobStatus NewStatus
+    );
+    public record AddApplicationNoteRequest(
+        [Required] string Feedback
     );
 }

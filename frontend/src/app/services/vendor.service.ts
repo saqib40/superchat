@@ -1,10 +1,8 @@
-// src/app/services/vendor.service.ts
-
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { Job, Employee } from '../models';
+import { Job, Employee, VendorJobDetailDto } from '../models';
 
 @Injectable({ providedIn: 'root' })
 export class VendorService {
@@ -16,8 +14,8 @@ export class VendorService {
     return this.http.get<Job[]>(`${this.apiUrl}/jobs`);
   }
 
-  getEmployeesForJob(jobPublicId: string): Observable<Employee[]> {
-    return this.http.get<Employee[]>(`${this.apiUrl}/jobs/${jobPublicId}/employees`);
+  getAssignedJobDetails(jobPublicId: string): Observable<VendorJobDetailDto> {
+    return this.http.get<VendorJobDetailDto>(`${this.apiUrl}/jobs/${jobPublicId}`);
   }
 
   createEmployee(formData: FormData): Observable<Employee> {

@@ -4,6 +4,7 @@ using backend.Config;
 using backend.DTOs;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using backend.Enums;
 
 namespace backend.Services
 {
@@ -74,6 +75,16 @@ namespace backend.Services
                 CreatedByUserId = vendorUser.Id
             };
 
+            // After creating an employee, we now create the application link with a 'Submitted' status.
+            var jobApplication = new JobApplication
+            {
+                Job = job,
+                Employee = employee,
+                Status = ApplicationStatus.Submitted,
+                LastUpdatedAt = DateTime.UtcNow
+            };
+            _context.JobApplications.Add(jobApplication);
+
             _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
 
@@ -85,13 +96,60 @@ namespace backend.Services
             var employee = await _context.Employees.IgnoreQueryFilters()
                 .Include(e => e.Vendor.User)
                 .FirstOrDefaultAsync(e => e.PublicId == publicId && e.Vendor.User.PublicId == userPublicId);
-            
+
             if (employee == null) return false;
 
             employee.IsActive = false;
+
+            // Find all applications for this employee and mark them as Rejected,
+            // as the candidate has been withdrawn by the vendor.
+            var applications = await _context.JobApplications
+                .Where(app => app.EmployeeId == employee.Id)
+                .ToListAsync();
+
+            foreach (var app in applications)
+            {
+                app.Status = ApplicationStatus.Rejected;
+                app.Feedback = "Candidate withdrawn by vendor.";
+                app.LastUpdatedAt = DateTime.UtcNow;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }
+        
+        // Gets a detailed view of a single job assigned to the vendor, including the status of all their submitted candidates.
+        public async Task<VendorJobDetailDto?> GetMyAssignedJobDetailsAsync(Guid jobPublicId, Guid userPublicId)
+        {
+            var vendor = await _context.Vendors.AsNoTracking().FirstOrDefaultAsync(v => v.User.PublicId == userPublicId);
+            if (vendor == null) return null;
+
+            return await _context.Jobs
+                .Where(j => j.PublicId == jobPublicId && j.VendorAssignments.Any(va => va.VendorId == vendor.Id))
+                .Select(job => new VendorJobDetailDto(
+                    job.PublicId,
+                    job.Title,
+                    job.Description,
+                    job.Country,
+                    job.ExpiryDate,
+                    // Get all applications for this job submitted ONLY by the current vendor
+                    _context.JobApplications
+                        .Where(app => app.JobId == job.Id && app.Employee.VendorId == vendor.Id)
+                        .Select(app => new JobApplicationDto(
+                            app.PublicId,
+                            app.Status,
+                            app.LastUpdatedAt,
+                            app.Feedback,
+                            app.Employee.PublicId,
+                            app.Employee.FirstName,
+                            app.Employee.LastName,
+                            app.Employee.Email,
+                            app.Job.PublicId,
+                            app.Job.Title
+                        )).ToList()
+                ))
+                .FirstOrDefaultAsync();
+        }   
 
         public async Task<IEnumerable<JobDto>> GetMyAssignedJobsAsync(Guid userPublicId)
         {
@@ -102,17 +160,6 @@ namespace backend.Services
                 .Where(jv => jv.VendorId == vendor.Id)
                 .Select(jv => jv.Job)
                 .Select(j => new JobDto(j.PublicId, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, (j.ExpiryDate - DateTime.UtcNow).TotalDays))
-                .ToListAsync();
-        }
-
-        public async Task<IEnumerable<EmployeeDto>> GetMyEmployeesForJobAsync(Guid jobPublicId, Guid userPublicId)
-        {
-            var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.User.PublicId == userPublicId);
-            if(vendor == null) return Enumerable.Empty<EmployeeDto>();
-
-            return await _context.Employees
-                .Where(e => e.Job.PublicId == jobPublicId && e.VendorId == vendor.Id)
-                .Select(e => new EmployeeDto(e.PublicId, e.FirstName, e.LastName, e.JobTitle))
                 .ToListAsync();
         }
 

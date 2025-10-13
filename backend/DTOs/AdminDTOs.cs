@@ -1,6 +1,4 @@
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Mvc;
-using backend.Enums;
 
 namespace backend.DTOs
 {
@@ -11,5 +9,12 @@ namespace backend.DTOs
         [Required] string LastName
     );
     public record UserDto(Guid PublicId, string Email, string FirstName, string LastName);
-
+    public record AdminDashboardStatsDto(
+    int ActiveJobCount,
+    int ActiveVendorCount,
+    int TotalApplications,
+    int HiredApplications,
+    List<UserDto> RecentlyAddedLeaders,
+    List<VendorDto> RecentlyAddedVendors
+);
 }

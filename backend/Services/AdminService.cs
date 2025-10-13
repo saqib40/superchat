@@ -3,6 +3,7 @@ using backend.DTOs;
 using backend.Helpers;
 using backend.Models;
 using Microsoft.EntityFrameworkCore;
+using backend.Enums;
 
 namespace backend.Services
 {
@@ -69,6 +70,54 @@ namespace backend.Services
             return await _context.Users
                 .Where(u => u.Roles.Any(r => r.Name == "Leadership"))
                 .Select(u => new UserDto(u.PublicId, u.Email, u.FirstName, u.LastName))
+                .ToListAsync();
+        }
+
+        public async Task<AdminDashboardStatsDto> GetDashboardStatsAsync()
+        {
+            var activeJobCount = await _context.Jobs.CountAsync(); // Global query filter handles 'IsActive'
+            var activeVendorCount = await _context.Vendors.CountAsync();
+            var totalApplications = await _context.JobApplications.CountAsync();
+            var hiredApplications = await _context.JobApplications.CountAsync(app => app.Status == ApplicationStatus.Hired);
+
+            var recentlyAddedLeaders = await _context.Users
+                .Where(u => u.Roles.Any(r => r.Name == "Leadership"))
+                .OrderByDescending(u => u.CreatedAt)
+                .Take(5)
+                .Select(u => new UserDto(u.PublicId, u.Email, u.FirstName, u.LastName))
+                .ToListAsync();
+
+            var recentlyAddedVendors = await _context.Vendors
+                .OrderByDescending(v => v.CreatedAt)
+                .Take(5)
+                .Select(v => new VendorDto(v.PublicId, v.CompanyName, v.ContactEmail, v.Country, v.Status))
+                .ToListAsync();
+
+            return new AdminDashboardStatsDto(
+                activeJobCount,
+                activeVendorCount,
+                totalApplications,
+                hiredApplications,
+                recentlyAddedLeaders,
+                recentlyAddedVendors
+            );
+        }
+
+        // Gets a list of ALL active jobs in the system, regardless of creator.
+        public async Task<IEnumerable<JobDto>> GetAllJobsAsync()
+        {
+            return await _context.Jobs
+                .OrderByDescending(j => j.CreatedAt)
+                .Select(j => new JobDto(j.PublicId, j.Title, j.Country, j.CreatedAt, j.ExpiryDate, (j.ExpiryDate - DateTime.UtcNow).TotalDays))
+                .ToListAsync();
+        }
+
+        // Gets a list of ALL active vendors in the system.
+        public async Task<IEnumerable<VendorDto>> GetAllVendorsAsync()
+        {
+            return await _context.Vendors
+                .OrderByDescending(v => v.CreatedAt)
+                .Select(v => new VendorDto(v.PublicId, v.CompanyName, v.ContactEmail, v.Country, v.Status))
                 .ToListAsync();
         }
     }
