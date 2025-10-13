@@ -17,6 +17,12 @@ namespace backend.Services
 
         public async Task<UserDto?> CreateLeaderAsync(CreateLeaderRequest dto, int adminId)
         {
+            var emailExistsInUsers = await _context.Users.AnyAsync(u => u.Email == dto.Email);
+            var emailExistsInEmployees = await _context.Employees.IgnoreQueryFilters().AnyAsync(e => e.Email == dto.Email);
+            if (emailExistsInUsers || emailExistsInEmployees)
+            {
+                return null;
+            }
             var leaderRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Leadership");
             if (leaderRole == null) return null; // Should not happen if DB is seeded
 
@@ -39,10 +45,20 @@ namespace backend.Services
         public async Task<bool> SoftDeleteLeaderAsync(Guid publicId)
         {
             // IgnoreQueryFilters() is used to find a user even if they are already soft-deleted (IsActive = false).
-            var leader = await _context.Users.IgnoreQueryFilters().FirstOrDefaultAsync(u => u.PublicId == publicId);
+            // Use .Include() to fetch the leader AND all of their created jobs in one query.
+            var leader = await _context.Users
+                .Include(u => u.JobsCreated)
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(u => u.PublicId == publicId);
             if (leader == null) return false;
 
             leader.IsActive = false;
+            // --- DOMINO EFFECT ---
+            // Loop through all jobs created by this leader and deactivate them.
+            foreach (var job in leader.JobsCreated)
+            {
+                job.IsActive = false;
+            }
             await _context.SaveChangesAsync();
             return true;
         }

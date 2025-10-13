@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using backend.Helpers;
+using backend.Enums;
 
 namespace backend.Controllers
 {
@@ -83,25 +84,56 @@ namespace backend.Controllers
             return Ok(employee);
 
         }
-        // --- NEW ENDPOINT FOR STATUS UPDATE ---
-        [HttpPut("employees/{publicId:guid}/statusupdate")]
-        public async Task<IActionResult> UpdateEmployeeStatus(Guid publicId, [FromBody] UpdateEmployeeStatusRequest dto)
+        /// <summary>
+        /// Updates the status of a specific candidate's application for a job.
+        /// </summary>
+        [HttpPatch("applications/{applicationPublicId:guid}/status")]
+        public async Task<IActionResult> UpdateApplicationStatus(Guid applicationPublicId, [FromBody] UpdateApplicationStatusRequest dto)
         {
-            // We get the current user's ID to pass to the service for logging/auditing.
-            var leaderId = GetCurrentUserId();
-
-            var success = await _leadershipService.UpdateEmployeeStatusAsync(publicId, dto.Status, leaderId);
+            var success = await _leadershipService.UpdateApplicationStatusAsync(
+                applicationPublicId,
+                dto.NewStatus,
+                GetCurrentUserId()
+            );
 
             if (!success)
             {
-                // The service will return false if the employee isn't found or the status is invalid.
-                return BadRequest("Could not update status. Employee not found or status is invalid.");
+                return BadRequest("Could not update status. The application may not exist or you may not be authorized.");
             }
-
-            // A 204 No Content response is standard for a successful PUT request that doesn't need to return data.
-            return NoContent();
+            return Ok(new { message = "Status updated successfully." });
+        }
+        /// <summary>
+        /// Gets all candidates for a specific job who are scheduled for an interview.
+        /// </summary>
+        [HttpGet("jobs/{jobPublicId:guid}/applications/scheduled")]
+        public async Task<IActionResult> GetScheduledApplicationsForJob(Guid jobPublicId)
+        {
+            var applications = await _leadershipService.GetApplicationsByStatusForJobAsync(
+                jobPublicId, 
+                ApplicationStatus.ScheduledForInterview, 
+                GetCurrentUserId()
+            );
+            return Ok(applications);
         }
 
+        /// <summary>
+        /// Gets a global list of all candidates hired by the current leader across all their jobs.
+        /// </summary>
+        [HttpGet("applications/hired")]
+        public async Task<IActionResult> GetHiredApplications()
+        {
+            var applications = await _leadershipService.GetHiredApplicationsForLeaderAsync(GetCurrentUserId());
+            return Ok(applications);
+        }
+
+        // --- Soft Delete a Job ---
+        [HttpDelete("jobs/{publicId:guid}")]
+        public async Task<IActionResult> SoftDeleteJob(Guid publicId)
+        {
+            var success = await _leadershipService.SoftDeleteJobAsync(publicId);
+            if (!success) return NotFound();
+            return NoContent();
+        }
     }
 }
 
