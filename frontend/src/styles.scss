@@ -1,0 +1,23 @@
+/* src/styles.scss */
+
+// 1. Tailwind CSS directives
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// 2. Global styles
+html, body {
+  font-family: "Inter", sans-serif;
+  background-color: #F3F4F6; /* gray-100 */
+  color: #374151; /* gray-700 */
+  height: 100%;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #111827; /* gray-900 */
+  font-weight: 800;
+}
+
+body {
+  margin: 0;
+}
