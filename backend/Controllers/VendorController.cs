@@ -39,11 +39,17 @@ namespace backend.Controllers
             return Ok(jobs);
         }
 
-        [HttpGet("jobs/{jobPublicId:guid}/employees")]
-        public async Task<IActionResult> GetMyEmployeesForJob(Guid jobPublicId)
+        // --- REPLACED ENDPOINT ---
+        // This new endpoint provides a much richer view, including candidate statuses.
+        /// <summary>
+        /// Gets a detailed view of a single assigned job, including the status of all submitted candidates.
+        /// </summary>
+        [HttpGet("jobs/{jobPublicId:guid}")]
+        public async Task<IActionResult> GetMyAssignedJobDetails(Guid jobPublicId)
         {
-            var employees = await _vendorService.GetMyEmployeesForJobAsync(jobPublicId, GetCurrentUserPublicId());
-            return Ok(employees);
+            var jobDetails = await _vendorService.GetMyAssignedJobDetailsAsync(jobPublicId, GetCurrentUserPublicId());
+            if (jobDetails == null) return NotFound();
+            return Ok(jobDetails);
         }
 
     }

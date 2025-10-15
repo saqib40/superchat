@@ -19,6 +19,8 @@ namespace backend.Models
         public ApplicationStatus Status { get; set; }
         public DateTime LastUpdatedAt { get; set; } = DateTime.UtcNow;
 
+        public string? Feedback { get; set; } // For interview notes, etc.
+
         // Navigation properties for EF Core to understand the relationships
         [ForeignKey("JobId")]
         public virtual Job Job { get; set; } = null!;

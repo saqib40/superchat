@@ -2,12 +2,12 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MessagingService } from '../services/messaging.service';
+import { MessagingStateService } from '../services/messaging-state.service';
 import { ConversationDto } from '../models';
-import { ChatModalComponent } from './chat-modal.component';
 
 @Component({
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, ChatModalComponent],
+  imports: [CommonModule, RouterModule, DatePipe],
   template: `
     <div class="p-6 bg-white rounded-lg shadow">
       <h2 class="text-2xl font-bold text-gray-800">My Conversations</h2>
@@ -32,26 +32,21 @@ import { ChatModalComponent } from './chat-modal.component';
             </div>
           </div>
           <div *ngIf="convo.lastMessage" class="mt-2 pt-2 border-t border-gray-200">
-            <p class="text-sm text-gray-600 italic truncate">
-              "{{ convo.lastMessage }}"
-            </p>
+            <p class="text-sm text-gray-600 italic truncate">"{{ convo.lastMessage }}"</p>
           </div>
         </div>
       </div>
     </div>
-
-    <app-chat-modal *ngIf="selectedConversation" 
-                    [conversation]="selectedConversation" 
-                    (closeModal)="closeChat()">
-    </app-chat-modal>
-  `
+    `
 })
 export class ConversationsComponent implements OnInit {
   conversations: ConversationDto[] = [];
   isLoading = true;
-  selectedConversation: ConversationDto | null = null;
 
-  constructor(private messagingService: MessagingService) {}
+  constructor(
+    private messagingService: MessagingService,
+    private messagingStateService: MessagingStateService
+  ) {}
 
   ngOnInit(): void {
     this.messagingService.getMyConversations().subscribe({
@@ -67,10 +62,6 @@ export class ConversationsComponent implements OnInit {
   }
 
   openChat(conversation: ConversationDto): void {
-    this.selectedConversation = conversation;
-  }
-
-  closeChat(): void {
-    this.selectedConversation = null;
+    this.messagingStateService.openChat(conversation);
   }
 }
