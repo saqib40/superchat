@@ -7,7 +7,7 @@ git clone https://github.com/Rohitpatilexe/superchat
 # get into directory
 cd superchat
 
-# then create .env file following .env.example and populate it
+# then create .env file following .env.example in  =
 
 # then
 
@@ -23,4 +23,14 @@ docker-compose up -d # detached mode
 docker-compose down
 # or
 docker-compose down -v # includes volumes as well
+```
+
+
+***Note*** :- You need to update this thing before running via docker compose
+```javascript
+// in the frontend/src/environments
+// update
+apiUrl: 'http://localhost:5138/api'
+// to
+apiUrl: 'http://localhost:8081/api'
 ```
