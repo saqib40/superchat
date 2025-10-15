@@ -1,3 +1,10 @@
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.csproj.AssemblyReference.cache
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.AssemblyInfoInputs.cache
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.AssemblyInfo.cs
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.csproj.CoreCompileInputs.cache
+C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.sourcelink.json
+C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\.msCoverageSourceRootsMapping_backend.Tests
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\CoverletSourceRootsMapping_backend.Tests
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\testhost.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.deps.json
@@ -8,7 +15,7 @@ C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\swagger.json
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.staticwebassets.endpoints.json
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.exe
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\testhost.exe
-C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\xunit.runner.visualstudio.dotnetcore.testadapter.dll
+C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\xunit.runner.visualstudio.testadapter.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\xunit.runner.reporters.netcoreapp10.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\xunit.runner.utility.netcoreapp10.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.Tests.deps.json
@@ -20,7 +27,6 @@ C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\AWSSDK.Core.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\AWSSDK.S3.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Azure.Core.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Azure.Identity.dll
-C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Castle.Core.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\DotNetEnv.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\FluentAssertions.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
@@ -59,9 +65,7 @@ C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Microsoft.TestPlatform
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Microsoft.TestPlatform.Utilities.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Microsoft.VisualStudio.TestPlatform.Common.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Microsoft.Win32.SystemEvents.dll
-C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Moq.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Newtonsoft.Json.dll
-C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\NuGet.Frameworks.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\SendGrid.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\Sprache.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\StarkbankEcdsa.dll
@@ -160,12 +164,6 @@ C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.dll
 C:\Users\condthi\superchat\backend.Tests\bin\Debug\net9.0\backend.pdb
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.csproj.AssemblyReference.cache
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.GeneratedMSBuildEditorConfig.editorconfig
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.AssemblyInfoInputs.cache
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.AssemblyInfo.cs
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.csproj.CoreCompileInputs.cache
-C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.sourcelink.json
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend..070E3F92.Up2Date
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\backend.Tests.dll
 C:\Users\condthi\superchat\backend.Tests\obj\Debug\net9.0\refint\backend.Tests.dll

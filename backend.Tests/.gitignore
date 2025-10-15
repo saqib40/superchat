@@ -1,0 +1,29 @@
+﻿# Build artifacts
+bin/
+obj/
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragejson
+
+# xUnit test host and runners
+testhost.dll
+testhost.exe
+xunit.runner.*
+
+# IDE-specific files
+.vs/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Logs
+*.log
+
+# Misc
+*.DS_Store
+Thumbs.db
