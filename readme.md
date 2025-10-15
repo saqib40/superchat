@@ -7,7 +7,7 @@ git clone https://github.com/Rohitpatilexe/superchat
 # get into directory
 cd superchat
 
-# then create .env file following .env.example in  =
+# then create .env file following .env.example in superchat directory itself
 
 # then
 
