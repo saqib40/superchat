@@ -1,9 +1,7 @@
-// src/app/guards/auth.guard.spec.ts
-
 import { TestBed } from '@angular/core/testing';
 import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
-import { authGuard } from './auth.guard';
+import { RouterTestingModule } from '@angular/router/testing';//consider it as a fake route provider so that it doesnt mess with main routes 
+import { authGuard } from './auth.guard';//the unit under test
 import { AuthService } from '../services/auth.service';
 
 // Helper to execute the guard in the right context
@@ -14,7 +12,7 @@ const executeGuard = (route: ActivatedRouteSnapshot) => {
 
 describe('authGuard', () => {
   let authServiceMock: Partial<AuthService>;
-  let router: Router;
+  let router: Router;// we want it to be available throught the test suite 
 
   beforeEach(() => {
     // Mock the AuthService
@@ -36,7 +34,7 @@ describe('authGuard', () => {
 
   it('should return true if the user has the expected role', () => {
     authServiceMock.getUserRole = () => 'Admin';
-    const route = { data: { expectedRole: 'Admin' } } as unknown as ActivatedRouteSnapshot;
+    const route = { data: { expectedRole: 'Admin' } } as unknown as ActivatedRouteSnapshot;//TypeScript instruction, It's a way to create a simple mock without a lot of boilerplate.
     const canActivate = executeGuard(route);
     expect(canActivate).toBe(true);
   });
